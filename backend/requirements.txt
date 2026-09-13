@@ -6,3 +6,4 @@ torch==2.14.0
 transformers==5.16.1
 phonemizer==3.4.0
 numpy==2.5.3
+scikit-learn==1.9.1
