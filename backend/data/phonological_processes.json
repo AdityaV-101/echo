@@ -1,0 +1,49 @@
+{
+  "_comment": "Documented child phonological simplification processes, used by hypothesis_scorer.py to generate candidate mispronunciations of a target word. Each rule is a single phone substitution; structural processes (final consonant deletion, cluster reduction, weak syllable deletion) are applied procedurally in code since they depend on position within the word, not a fixed phone-to-phone mapping.",
+  "gliding": [
+    {"from": "R", "to": "W"},
+    {"from": "L", "to": "W"},
+    {"from": "L", "to": "Y"}
+  ],
+  "stopping": [
+    {"from": "S", "to": "T"},
+    {"from": "Z", "to": "D"},
+    {"from": "F", "to": "P"},
+    {"from": "V", "to": "B"},
+    {"from": "TH", "to": "T"},
+    {"from": "DH", "to": "D"},
+    {"from": "SH", "to": "T"},
+    {"from": "CH", "to": "T"}
+  ],
+  "fronting": [
+    {"from": "K", "to": "T"},
+    {"from": "G", "to": "D"},
+    {"from": "NG", "to": "N"},
+    {"from": "SH", "to": "S"}
+  ],
+  "backing": [
+    {"from": "T", "to": "K"},
+    {"from": "D", "to": "G"}
+  ],
+  "deaffrication": [
+    {"from": "CH", "to": "SH"},
+    {"from": "JH", "to": "ZH"}
+  ],
+  "devoicing_voicing": [
+    {"from": "B", "to": "P"},
+    {"from": "P", "to": "B"},
+    {"from": "D", "to": "T"},
+    {"from": "T", "to": "D"},
+    {"from": "G", "to": "K"},
+    {"from": "K", "to": "G"},
+    {"from": "V", "to": "F"},
+    {"from": "F", "to": "V"},
+    {"from": "Z", "to": "S"},
+    {"from": "S", "to": "Z"}
+  ],
+  "vowelization": [
+    {"from": "L", "to": "OW"},
+    {"from": "L", "to": "UW"},
+    {"from": "ER", "to": "UH"}
+  ]
+}

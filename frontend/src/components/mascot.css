@@ -1,0 +1,66 @@
+.mascot-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Soft static glow behind the mark so it reads as a brand emblem rather
+   than a flat sticker. Color shifts with state; nothing here animates. */
+.mascot-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(31, 138, 87, 0.24) 0%, rgba(31, 138, 87, 0) 70%);
+  z-index: -1;
+}
+.mascot-wrap--celebrating::before {
+  background: radial-gradient(circle, rgba(255, 201, 77, 0.38) 0%, rgba(255, 201, 77, 0) 70%);
+}
+.mascot-wrap--listening::before {
+  background: radial-gradient(circle, rgba(34, 201, 184, 0.32) 0%, rgba(34, 201, 184, 0) 70%);
+}
+.mascot-wrap--encouraging::before {
+  background: radial-gradient(circle, rgba(255, 184, 77, 0.3) 0%, rgba(255, 184, 77, 0) 70%);
+}
+
+/* Listening: a single static ring, not a pulse - it marks the state
+   without asking the mark itself to move. */
+.mascot-listening-ring {
+  position: absolute;
+  inset: -6%;
+  border-radius: 50%;
+  border: 3px solid var(--color-secondary);
+  opacity: 0.6;
+}
+
+/* --- Celebrating: a one-shot confetti burst. Particles, not the mark. --- */
+.confetti-piece {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation-duration: 0.9s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  animation-name: confettiFly;
+}
+
+@keyframes confettiFly {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(540deg); opacity: 0; }
+}
+
+.confetti-piece-0 { --dx: 60px; --dy: -10px; }
+.confetti-piece-1 { --dx: 50px; --dy: -40px; animation-delay: 0.03s; }
+.confetti-piece-2 { --dx: 20px; --dy: -65px; animation-delay: 0.06s; }
+.confetti-piece-3 { --dx: -15px; --dy: -68px; animation-delay: 0.02s; }
+.confetti-piece-4 { --dx: -45px; --dy: -50px; animation-delay: 0.08s; }
+.confetti-piece-5 { --dx: -62px; --dy: -15px; animation-delay: 0.01s; }
+.confetti-piece-6 { --dx: -65px; --dy: 20px; animation-delay: 0.05s; }
+.confetti-piece-7 { --dx: -45px; --dy: 50px; animation-delay: 0.07s; }
+.confetti-piece-8 { --dx: -15px; --dy: 68px; animation-delay: 0.04s; }
+.confetti-piece-9 { --dx: 20px; --dy: 65px; animation-delay: 0.09s; }
+.confetti-piece-10 { --dx: 50px; --dy: 40px; animation-delay: 0.02s; }
+.confetti-piece-11 { --dx: 65px; --dy: 10px; animation-delay: 0.06s; }
+.confetti-piece-12 { --dx: 35px; --dy: -30px; animation-delay: 0.03s; }
+.confetti-piece-13 { --dx: -30px; --dy: 35px; animation-delay: 0.05s; }

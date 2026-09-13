@@ -1,0 +1,18 @@
+{
+  "_comment": "Relative plausibility priors over a pronunciation hypothesis's origin, used by hypothesis_scorer.py as LAMBDA * log_prior added to each candidate's length-normalized CTC log-likelihood. Unlike gop_config.py's old GLOBAL_PRIOR (which was derived from a real synthetic corpus), these are NOT data-derived - they encode an ordinal ranking from commonly-cited developmental phonology references: cluster reduction, stopping, fronting, gliding, and final consonant deletion are frequently documented as among the most common simplification processes in early childhood speech; devoicing/voicing and vowelization somewhat less so; backing and deaffrication are comparatively rare and often flagged as atypical when present. A data-driven candidate (an acoustic competitor with no matching documented process) gets the lowest prior: real acoustic evidence, but no independent linguistic reason to expect it. Both these values and LAMBDA (hypothesis_config.py) are starting points, meant to be tuned against eval/speechocean_train.jsonl (the dev split) - see eval/run_hypothesis_eval.py. Never trust them by construction; only keep changes that measurably improve dev numbers.",
+  "canonical": 0.0,
+  "data_driven": -2.0,
+  "processes": {
+    "cluster_reduction": -0.3,
+    "stopping": -0.3,
+    "fronting": -0.4,
+    "gliding": -0.4,
+    "final_consonant_deletion": -0.5,
+    "devoicing_voicing": -0.7,
+    "vowelization": -0.7,
+    "weak_syllable_deletion": -0.8,
+    "deaffrication": -1.3,
+    "backing": -1.5,
+    "_default": -1.0
+  }
+}

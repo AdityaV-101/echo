@@ -1,0 +1,82 @@
+{
+  "R": {
+    "label": "R",
+    "tiers": [
+      {"tier": 1, "name": "Initial, 1 syllable", "words": ["red", "run", "rain", "rock", "rope", "rug"]},
+      {"tier": 2, "name": "Final, 1 syllable", "words": ["car", "star", "door", "bear", "four", "hair"]},
+      {"tier": 3, "name": "Medial, 2 syllables", "words": ["carrot", "arrow", "mirror", "parrot", "cherry", "orange"]},
+      {"tier": 4, "name": "Consonant clusters", "words": ["tree", "train", "green", "frog", "bread", "drum"]},
+      {"tier": 5, "name": "Multisyllabic and phrases", "words": ["butterfly", "umbrella", "refrigerator", "the red rabbit ran", "a green frog", "four brown bears"]}
+    ]
+  },
+  "S": {
+    "label": "S",
+    "tiers": [
+      {"tier": 1, "name": "Initial, 1 syllable", "words": ["sun", "sit", "sock", "soup", "sad", "sand"]},
+      {"tier": 2, "name": "Final, 1 syllable", "words": ["bus", "gas", "mouse", "house", "ice", "dress"]},
+      {"tier": 3, "name": "Medial, 2 syllables", "words": ["pencil", "bicycle", "dinosaur", "castle", "whistle", "listen"]},
+      {"tier": 4, "name": "Consonant clusters", "words": ["stop", "spoon", "snake", "smile", "sleep", "star"]},
+      {"tier": 5, "name": "Multisyllabic and phrases", "words": ["astronaut", "basketball", "six silly snakes", "she sees the sun", "a small stone", "sunny summer"]}
+    ]
+  },
+  "L": {
+    "label": "L",
+    "tiers": [
+      {"tier": 1, "name": "Initial, 1 syllable", "words": ["leg", "lip", "lake", "log", "love", "light"]},
+      {"tier": 2, "name": "Final, 1 syllable", "words": ["ball", "bell", "pool", "smile", "tail", "wheel"]},
+      {"tier": 3, "name": "Medial, 2 syllables", "words": ["yellow", "balloon", "pillow", "gallon", "silly", "jelly"]},
+      {"tier": 4, "name": "Consonant clusters", "words": ["black", "blue", "clock", "glue", "flag", "plane"]},
+      {"tier": 5, "name": "Multisyllabic and phrases", "words": ["elephant", "helicopter", "lollipop", "little yellow lion", "a blue balloon", "look at the lake"]}
+    ]
+  },
+  "TH": {
+    "label": "TH",
+    "tiers": [
+      {"tier": 1, "name": "Initial, 1 syllable", "words": ["thumb", "think", "thin", "thick", "thorn", "thud"]},
+      {"tier": 2, "name": "Final, 1 syllable", "words": ["tooth", "bath", "math", "mouth", "path", "cloth"]},
+      {"tier": 3, "name": "Medial, 2 syllables", "words": ["nothing", "anything", "bathtub", "toothbrush", "python", "author"]},
+      {"tier": 4, "name": "Consonant clusters", "words": ["throw", "three", "thrill", "thrust", "throat", "thread"]},
+      {"tier": 5, "name": "Multisyllabic and phrases", "words": ["thunderstorm", "birthday", "thirty thin threads", "think about that", "a thick blanket", "three brothers"]}
+    ]
+  },
+  "Z": {
+    "label": "Z",
+    "tiers": [
+      {"tier": 1, "name": "Initial, 1 syllable", "words": ["zoo", "zip", "zap", "zoom", "zebra", "zero"]},
+      {"tier": 2, "name": "Final, 1 syllable", "words": ["buzz", "nose", "bees", "cheese", "toes", "shoes"]},
+      {"tier": 3, "name": "Medial, 2 syllables", "words": ["lazy", "dizzy", "music", "puzzle", "desert", "closet"]},
+      {"tier": 4, "name": "Consonant clusters", "words": ["snooze", "sneeze", "prize", "size", "breeze", "freeze"]},
+      {"tier": 5, "name": "Multisyllabic and phrases", "words": ["magazine", "xylophone", "zippy zebras zoom", "close the zipper", "a dozen roses", "busy bees buzz"]}
+    ]
+  },
+  "SH": {
+    "label": "SH",
+    "tiers": [
+      {"tier": 1, "name": "Initial, 1 syllable", "words": ["shoe", "ship", "shop", "shell", "sheep", "shed"]},
+      {"tier": 2, "name": "Final, 1 syllable", "words": ["fish", "dish", "wash", "push", "cash", "brush"]},
+      {"tier": 3, "name": "Medial, 2 syllables", "words": ["washing", "fishing", "ocean", "special", "cushion", "pushy"]},
+      {"tier": 4, "name": "Consonant clusters", "words": ["shrimp", "shrub", "shred", "shrink", "shriek", "shrug"]},
+      {"tier": 5, "name": "Multisyllabic and phrases", "words": ["dishwasher", "shopping mall", "she sells shells", "wash the dishes", "a shiny shell", "fresh fish"]}
+    ]
+  },
+  "CH": {
+    "label": "CH",
+    "tiers": [
+      {"tier": 1, "name": "Initial, 1 syllable", "words": ["chip", "chin", "chair", "cheese", "chase", "chalk"]},
+      {"tier": 2, "name": "Final, 1 syllable", "words": ["watch", "lunch", "beach", "peach", "couch", "match"]},
+      {"tier": 3, "name": "Medial, 2 syllables", "words": ["kitchen", "teacher", "picture", "nature", "reaching", "matches"]},
+      {"tier": 4, "name": "Consonant clusters", "words": ["lunchbox", "branch", "bench", "pinch", "crunch", "punch"]},
+      {"tier": 5, "name": "Multisyllabic and phrases", "words": ["chocolate chip", "chicken sandwich", "chase the chicken", "a cheerful child", "chew your lunch", "chilly weather"]}
+    ]
+  },
+  "K": {
+    "label": "K",
+    "tiers": [
+      {"tier": 1, "name": "Initial, 1 syllable", "words": ["cat", "cup", "key", "cow", "cake", "kite"]},
+      {"tier": 2, "name": "Final, 1 syllable", "words": ["book", "lake", "duck", "sock", "milk", "bike"]},
+      {"tier": 3, "name": "Medial, 2 syllables", "words": ["cookie", "monkey", "pocket", "jacket", "bucket", "rocket"]},
+      {"tier": 4, "name": "Consonant clusters", "words": ["clock", "cloud", "cream", "crab", "climb", "cry"]},
+      {"tier": 5, "name": "Multisyllabic and phrases", "words": ["kangaroo", "basketball", "cook the cookies", "a quick kick", "clean the kitchen", "kids can climb"]}
+    ]
+  }
+}

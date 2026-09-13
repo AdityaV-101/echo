@@ -1,0 +1,8 @@
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+python-multipart==0.0.32
+cmudict==1.1.3
+torch==2.14.0
+transformers==5.16.1
+phonemizer==3.4.0
+numpy==2.5.3

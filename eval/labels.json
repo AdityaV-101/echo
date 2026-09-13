@@ -1,0 +1,966 @@
+[
+ {
+  "target_word": "pig",
+  "canonical": [
+   "P",
+   "IH",
+   "G"
+  ],
+  "audio_path": "audio/pig_correct.wav",
+  "label": "correct",
+  "synth_text": "pig",
+  "pattern": "G->N final (given smoke-test pair)"
+ },
+ {
+  "target_word": "pig",
+  "canonical": [
+   "P",
+   "IH",
+   "G"
+  ],
+  "audio_path": "audio/pig_error.wav",
+  "label": "error",
+  "synth_text": "pin",
+  "pattern": "G->N final (given smoke-test pair)"
+ },
+ {
+  "target_word": "rabbit",
+  "canonical": [
+   "R",
+   "AE",
+   "B",
+   "AH",
+   "T"
+  ],
+  "audio_path": "audio/rabbit_correct.wav",
+  "label": "correct",
+  "synth_text": "rabbit",
+  "pattern": "R->W initial gliding"
+ },
+ {
+  "target_word": "rabbit",
+  "canonical": [
+   "R",
+   "AE",
+   "B",
+   "AH",
+   "T"
+  ],
+  "audio_path": "audio/rabbit_error.wav",
+  "label": "error",
+  "synth_text": "wabbit",
+  "pattern": "R->W initial gliding"
+ },
+ {
+  "target_word": "red",
+  "canonical": [
+   "R",
+   "EH",
+   "D"
+  ],
+  "audio_path": "audio/red_correct.wav",
+  "label": "correct",
+  "synth_text": "red",
+  "pattern": "R->W initial gliding"
+ },
+ {
+  "target_word": "red",
+  "canonical": [
+   "R",
+   "EH",
+   "D"
+  ],
+  "audio_path": "audio/red_error.wav",
+  "label": "error",
+  "synth_text": "wed",
+  "pattern": "R->W initial gliding"
+ },
+ {
+  "target_word": "run",
+  "canonical": [
+   "R",
+   "AH",
+   "N"
+  ],
+  "audio_path": "audio/run_correct.wav",
+  "label": "correct",
+  "synth_text": "run",
+  "pattern": "R->W initial gliding"
+ },
+ {
+  "target_word": "run",
+  "canonical": [
+   "R",
+   "AH",
+   "N"
+  ],
+  "audio_path": "audio/run_error.wav",
+  "label": "error",
+  "synth_text": "wun",
+  "pattern": "R->W initial gliding"
+ },
+ {
+  "target_word": "rope",
+  "canonical": [
+   "R",
+   "OW",
+   "P"
+  ],
+  "audio_path": "audio/rope_correct.wav",
+  "label": "correct",
+  "synth_text": "rope",
+  "pattern": "R->W initial gliding"
+ },
+ {
+  "target_word": "rope",
+  "canonical": [
+   "R",
+   "OW",
+   "P"
+  ],
+  "audio_path": "audio/rope_error.wav",
+  "label": "error",
+  "synth_text": "wope",
+  "pattern": "R->W initial gliding"
+ },
+ {
+  "target_word": "car",
+  "canonical": [
+   "K",
+   "AA",
+   "R"
+  ],
+  "audio_path": "audio/car_correct.wav",
+  "label": "correct",
+  "synth_text": "car",
+  "pattern": "R->W final"
+ },
+ {
+  "target_word": "car",
+  "canonical": [
+   "K",
+   "AA",
+   "R"
+  ],
+  "audio_path": "audio/car_error.wav",
+  "label": "error",
+  "synth_text": "caw",
+  "pattern": "R->W final"
+ },
+ {
+  "target_word": "cat",
+  "canonical": [
+   "K",
+   "AE",
+   "T"
+  ],
+  "audio_path": "audio/cat_correct.wav",
+  "label": "correct",
+  "synth_text": "cat",
+  "pattern": "K->T initial fronting"
+ },
+ {
+  "target_word": "cat",
+  "canonical": [
+   "K",
+   "AE",
+   "T"
+  ],
+  "audio_path": "audio/cat_error.wav",
+  "label": "error",
+  "synth_text": "tat",
+  "pattern": "K->T initial fronting"
+ },
+ {
+  "target_word": "king",
+  "canonical": [
+   "K",
+   "IH",
+   "NG"
+  ],
+  "audio_path": "audio/king_correct.wav",
+  "label": "correct",
+  "synth_text": "king",
+  "pattern": "K->T initial fronting"
+ },
+ {
+  "target_word": "king",
+  "canonical": [
+   "K",
+   "IH",
+   "NG"
+  ],
+  "audio_path": "audio/king_error.wav",
+  "label": "error",
+  "synth_text": "ting",
+  "pattern": "K->T initial fronting"
+ },
+ {
+  "target_word": "cake",
+  "canonical": [
+   "K",
+   "EY",
+   "K"
+  ],
+  "audio_path": "audio/cake_correct.wav",
+  "label": "correct",
+  "synth_text": "cake",
+  "pattern": "K->T initial fronting"
+ },
+ {
+  "target_word": "cake",
+  "canonical": [
+   "K",
+   "EY",
+   "K"
+  ],
+  "audio_path": "audio/cake_error.wav",
+  "label": "error",
+  "synth_text": "take",
+  "pattern": "K->T initial fronting"
+ },
+ {
+  "target_word": "sun",
+  "canonical": [
+   "S",
+   "AH",
+   "N"
+  ],
+  "audio_path": "audio/sun_correct.wav",
+  "label": "correct",
+  "synth_text": "sun",
+  "pattern": "S->TH initial"
+ },
+ {
+  "target_word": "sun",
+  "canonical": [
+   "S",
+   "AH",
+   "N"
+  ],
+  "audio_path": "audio/sun_error.wav",
+  "label": "error",
+  "synth_text": "thun",
+  "pattern": "S->TH initial"
+ },
+ {
+  "target_word": "sock",
+  "canonical": [
+   "S",
+   "AA",
+   "K"
+  ],
+  "audio_path": "audio/sock_correct.wav",
+  "label": "correct",
+  "synth_text": "sock",
+  "pattern": "S->TH initial"
+ },
+ {
+  "target_word": "sock",
+  "canonical": [
+   "S",
+   "AA",
+   "K"
+  ],
+  "audio_path": "audio/sock_error.wav",
+  "label": "error",
+  "synth_text": "thock",
+  "pattern": "S->TH initial"
+ },
+ {
+  "target_word": "sing",
+  "canonical": [
+   "S",
+   "IH",
+   "NG"
+  ],
+  "audio_path": "audio/sing_correct.wav",
+  "label": "correct",
+  "synth_text": "sing",
+  "pattern": "S->TH initial"
+ },
+ {
+  "target_word": "sing",
+  "canonical": [
+   "S",
+   "IH",
+   "NG"
+  ],
+  "audio_path": "audio/sing_error.wav",
+  "label": "error",
+  "synth_text": "thing",
+  "pattern": "S->TH initial"
+ },
+ {
+  "target_word": "bus",
+  "canonical": [
+   "B",
+   "AH",
+   "S"
+  ],
+  "audio_path": "audio/bus_correct.wav",
+  "label": "correct",
+  "synth_text": "bus",
+  "pattern": "S->D final"
+ },
+ {
+  "target_word": "bus",
+  "canonical": [
+   "B",
+   "AH",
+   "S"
+  ],
+  "audio_path": "audio/bus_error.wav",
+  "label": "error",
+  "synth_text": "bud",
+  "pattern": "S->D final"
+ },
+ {
+  "target_word": "light",
+  "canonical": [
+   "L",
+   "AY",
+   "T"
+  ],
+  "audio_path": "audio/light_correct.wav",
+  "label": "correct",
+  "synth_text": "light",
+  "pattern": "L->W initial gliding"
+ },
+ {
+  "target_word": "light",
+  "canonical": [
+   "L",
+   "AY",
+   "T"
+  ],
+  "audio_path": "audio/light_error.wav",
+  "label": "error",
+  "synth_text": "wight",
+  "pattern": "L->W initial gliding"
+ },
+ {
+  "target_word": "look",
+  "canonical": [
+   "L",
+   "UH",
+   "K"
+  ],
+  "audio_path": "audio/look_correct.wav",
+  "label": "correct",
+  "synth_text": "look",
+  "pattern": "L->W initial gliding"
+ },
+ {
+  "target_word": "look",
+  "canonical": [
+   "L",
+   "UH",
+   "K"
+  ],
+  "audio_path": "audio/look_error.wav",
+  "label": "error",
+  "synth_text": "wook",
+  "pattern": "L->W initial gliding"
+ },
+ {
+  "target_word": "leaf",
+  "canonical": [
+   "L",
+   "IY",
+   "F"
+  ],
+  "audio_path": "audio/leaf_correct.wav",
+  "label": "correct",
+  "synth_text": "leaf",
+  "pattern": "L->W initial gliding"
+ },
+ {
+  "target_word": "leaf",
+  "canonical": [
+   "L",
+   "IY",
+   "F"
+  ],
+  "audio_path": "audio/leaf_error.wav",
+  "label": "error",
+  "synth_text": "weef",
+  "pattern": "L->W initial gliding"
+ },
+ {
+  "target_word": "leg",
+  "canonical": [
+   "L",
+   "EH",
+   "G"
+  ],
+  "audio_path": "audio/leg_correct.wav",
+  "label": "correct",
+  "synth_text": "leg",
+  "pattern": "L->W initial gliding"
+ },
+ {
+  "target_word": "leg",
+  "canonical": [
+   "L",
+   "EH",
+   "G"
+  ],
+  "audio_path": "audio/leg_error.wav",
+  "label": "error",
+  "synth_text": "weg",
+  "pattern": "L->W initial gliding"
+ },
+ {
+  "target_word": "thumb",
+  "canonical": [
+   "TH",
+   "AH",
+   "M"
+  ],
+  "audio_path": "audio/thumb_correct.wav",
+  "label": "correct",
+  "synth_text": "thumb",
+  "pattern": "TH->F initial fronting"
+ },
+ {
+  "target_word": "thumb",
+  "canonical": [
+   "TH",
+   "AH",
+   "M"
+  ],
+  "audio_path": "audio/thumb_error.wav",
+  "label": "error",
+  "synth_text": "fumb",
+  "pattern": "TH->F initial fronting"
+ },
+ {
+  "target_word": "think",
+  "canonical": [
+   "TH",
+   "IH",
+   "NG",
+   "K"
+  ],
+  "audio_path": "audio/think_correct.wav",
+  "label": "correct",
+  "synth_text": "think",
+  "pattern": "TH->T initial stopping"
+ },
+ {
+  "target_word": "think",
+  "canonical": [
+   "TH",
+   "IH",
+   "NG",
+   "K"
+  ],
+  "audio_path": "audio/think_error.wav",
+  "label": "error",
+  "synth_text": "tink",
+  "pattern": "TH->T initial stopping"
+ },
+ {
+  "target_word": "bath",
+  "canonical": [
+   "B",
+   "AE",
+   "TH"
+  ],
+  "audio_path": "audio/bath_correct.wav",
+  "label": "correct",
+  "synth_text": "bath",
+  "pattern": "TH->T final stopping"
+ },
+ {
+  "target_word": "bath",
+  "canonical": [
+   "B",
+   "AE",
+   "TH"
+  ],
+  "audio_path": "audio/bath_error.wav",
+  "label": "error",
+  "synth_text": "bat",
+  "pattern": "TH->T final stopping"
+ },
+ {
+  "target_word": "this",
+  "canonical": [
+   "DH",
+   "IH",
+   "S"
+  ],
+  "audio_path": "audio/this_correct.wav",
+  "label": "correct",
+  "synth_text": "this",
+  "pattern": "DH->D initial stopping"
+ },
+ {
+  "target_word": "this",
+  "canonical": [
+   "DH",
+   "IH",
+   "S"
+  ],
+  "audio_path": "audio/this_error.wav",
+  "label": "error",
+  "synth_text": "dis",
+  "pattern": "DH->D initial stopping"
+ },
+ {
+  "target_word": "that",
+  "canonical": [
+   "DH",
+   "AE",
+   "T"
+  ],
+  "audio_path": "audio/that_correct.wav",
+  "label": "correct",
+  "synth_text": "that",
+  "pattern": "DH->D initial stopping"
+ },
+ {
+  "target_word": "that",
+  "canonical": [
+   "DH",
+   "AE",
+   "T"
+  ],
+  "audio_path": "audio/that_error.wav",
+  "label": "error",
+  "synth_text": "dat",
+  "pattern": "DH->D initial stopping"
+ },
+ {
+  "target_word": "zoo",
+  "canonical": [
+   "Z",
+   "UW"
+  ],
+  "audio_path": "audio/zoo_correct.wav",
+  "label": "correct",
+  "synth_text": "zoo",
+  "pattern": "Z->D initial stopping"
+ },
+ {
+  "target_word": "zoo",
+  "canonical": [
+   "Z",
+   "UW"
+  ],
+  "audio_path": "audio/zoo_error.wav",
+  "label": "error",
+  "synth_text": "doo",
+  "pattern": "Z->D initial stopping"
+ },
+ {
+  "target_word": "zip",
+  "canonical": [
+   "Z",
+   "IH",
+   "P"
+  ],
+  "audio_path": "audio/zip_correct.wav",
+  "label": "correct",
+  "synth_text": "zip",
+  "pattern": "Z->D initial stopping"
+ },
+ {
+  "target_word": "zip",
+  "canonical": [
+   "Z",
+   "IH",
+   "P"
+  ],
+  "audio_path": "audio/zip_error.wav",
+  "label": "error",
+  "synth_text": "dip",
+  "pattern": "Z->D initial stopping"
+ },
+ {
+  "target_word": "shoe",
+  "canonical": [
+   "SH",
+   "UW"
+  ],
+  "audio_path": "audio/shoe_correct.wav",
+  "label": "correct",
+  "synth_text": "shoe",
+  "pattern": "SH->S initial"
+ },
+ {
+  "target_word": "shoe",
+  "canonical": [
+   "SH",
+   "UW"
+  ],
+  "audio_path": "audio/shoe_error.wav",
+  "label": "error",
+  "synth_text": "soo",
+  "pattern": "SH->S initial"
+ },
+ {
+  "target_word": "wish",
+  "canonical": [
+   "W",
+   "IH",
+   "SH"
+  ],
+  "audio_path": "audio/wish_correct.wav",
+  "label": "correct",
+  "synth_text": "wish",
+  "pattern": "SH->S final"
+ },
+ {
+  "target_word": "wish",
+  "canonical": [
+   "W",
+   "IH",
+   "SH"
+  ],
+  "audio_path": "audio/wish_error.wav",
+  "label": "error",
+  "synth_text": "wiss",
+  "pattern": "SH->S final"
+ },
+ {
+  "target_word": "sheep",
+  "canonical": [
+   "SH",
+   "IY",
+   "P"
+  ],
+  "audio_path": "audio/sheep_correct.wav",
+  "label": "correct",
+  "synth_text": "sheep",
+  "pattern": "SH->S initial"
+ },
+ {
+  "target_word": "sheep",
+  "canonical": [
+   "SH",
+   "IY",
+   "P"
+  ],
+  "audio_path": "audio/sheep_error.wav",
+  "label": "error",
+  "synth_text": "seep",
+  "pattern": "SH->S initial"
+ },
+ {
+  "target_word": "chip",
+  "canonical": [
+   "CH",
+   "IH",
+   "P"
+  ],
+  "audio_path": "audio/chip_correct.wav",
+  "label": "correct",
+  "synth_text": "chip",
+  "pattern": "CH->T initial deaffrication"
+ },
+ {
+  "target_word": "chip",
+  "canonical": [
+   "CH",
+   "IH",
+   "P"
+  ],
+  "audio_path": "audio/chip_error.wav",
+  "label": "error",
+  "synth_text": "tip",
+  "pattern": "CH->T initial deaffrication"
+ },
+ {
+  "target_word": "much",
+  "canonical": [
+   "M",
+   "AH",
+   "CH"
+  ],
+  "audio_path": "audio/much_correct.wav",
+  "label": "correct",
+  "synth_text": "much",
+  "pattern": "CH->T final deaffrication"
+ },
+ {
+  "target_word": "much",
+  "canonical": [
+   "M",
+   "AH",
+   "CH"
+  ],
+  "audio_path": "audio/much_error.wav",
+  "label": "error",
+  "synth_text": "mut",
+  "pattern": "CH->T final deaffrication"
+ },
+ {
+  "target_word": "chair",
+  "canonical": [
+   "CH",
+   "EH",
+   "R"
+  ],
+  "audio_path": "audio/chair_correct.wav",
+  "label": "correct",
+  "synth_text": "chair",
+  "pattern": "CH->T initial deaffrication"
+ },
+ {
+  "target_word": "chair",
+  "canonical": [
+   "CH",
+   "EH",
+   "R"
+  ],
+  "audio_path": "audio/chair_error.wav",
+  "label": "error",
+  "synth_text": "tair",
+  "pattern": "CH->T initial deaffrication"
+ },
+ {
+  "target_word": "jump",
+  "canonical": [
+   "JH",
+   "AH",
+   "M",
+   "P"
+  ],
+  "audio_path": "audio/jump_correct.wav",
+  "label": "correct",
+  "synth_text": "jump",
+  "pattern": "JH->D initial deaffrication"
+ },
+ {
+  "target_word": "jump",
+  "canonical": [
+   "JH",
+   "AH",
+   "M",
+   "P"
+  ],
+  "audio_path": "audio/jump_error.wav",
+  "label": "error",
+  "synth_text": "dump",
+  "pattern": "JH->D initial deaffrication"
+ },
+ {
+  "target_word": "juice",
+  "canonical": [
+   "JH",
+   "UW",
+   "S"
+  ],
+  "audio_path": "audio/juice_correct.wav",
+  "label": "correct",
+  "synth_text": "juice",
+  "pattern": "JH->D initial deaffrication"
+ },
+ {
+  "target_word": "juice",
+  "canonical": [
+   "JH",
+   "UW",
+   "S"
+  ],
+  "audio_path": "audio/juice_error.wav",
+  "label": "error",
+  "synth_text": "doose",
+  "pattern": "JH->D initial deaffrication"
+ },
+ {
+  "target_word": "go",
+  "canonical": [
+   "G",
+   "OW"
+  ],
+  "audio_path": "audio/go_correct.wav",
+  "label": "correct",
+  "synth_text": "go",
+  "pattern": "G->D initial fronting"
+ },
+ {
+  "target_word": "go",
+  "canonical": [
+   "G",
+   "OW"
+  ],
+  "audio_path": "audio/go_error.wav",
+  "label": "error",
+  "synth_text": "doe",
+  "pattern": "G->D initial fronting"
+ },
+ {
+  "target_word": "dog",
+  "canonical": [
+   "D",
+   "AO",
+   "G"
+  ],
+  "audio_path": "audio/dog_correct.wav",
+  "label": "correct",
+  "synth_text": "dog",
+  "pattern": "G->D final fronting"
+ },
+ {
+  "target_word": "dog",
+  "canonical": [
+   "D",
+   "AO",
+   "G"
+  ],
+  "audio_path": "audio/dog_error.wav",
+  "label": "error",
+  "synth_text": "dod",
+  "pattern": "G->D final fronting"
+ },
+ {
+  "target_word": "gate",
+  "canonical": [
+   "G",
+   "EY",
+   "T"
+  ],
+  "audio_path": "audio/gate_correct.wav",
+  "label": "correct",
+  "synth_text": "gate",
+  "pattern": "G->D initial fronting"
+ },
+ {
+  "target_word": "gate",
+  "canonical": [
+   "G",
+   "EY",
+   "T"
+  ],
+  "audio_path": "audio/gate_error.wav",
+  "label": "error",
+  "synth_text": "date",
+  "pattern": "G->D initial fronting"
+ },
+ {
+  "target_word": "fish",
+  "canonical": [
+   "F",
+   "IH",
+   "SH"
+  ],
+  "audio_path": "audio/fish_correct.wav",
+  "label": "correct",
+  "synth_text": "fish",
+  "pattern": "F->P initial stopping"
+ },
+ {
+  "target_word": "fish",
+  "canonical": [
+   "F",
+   "IH",
+   "SH"
+  ],
+  "audio_path": "audio/fish_error.wav",
+  "label": "error",
+  "synth_text": "pish",
+  "pattern": "F->P initial stopping"
+ },
+ {
+  "target_word": "van",
+  "canonical": [
+   "V",
+   "AE",
+   "N"
+  ],
+  "audio_path": "audio/van_correct.wav",
+  "label": "correct",
+  "synth_text": "van",
+  "pattern": "V->B initial stopping"
+ },
+ {
+  "target_word": "van",
+  "canonical": [
+   "V",
+   "AE",
+   "N"
+  ],
+  "audio_path": "audio/van_error.wav",
+  "label": "error",
+  "synth_text": "ban",
+  "pattern": "V->B initial stopping"
+ },
+ {
+  "target_word": "very",
+  "canonical": [
+   "V",
+   "EH",
+   "R",
+   "IY"
+  ],
+  "audio_path": "audio/very_correct.wav",
+  "label": "correct",
+  "synth_text": "very",
+  "pattern": "V->B initial stopping"
+ },
+ {
+  "target_word": "very",
+  "canonical": [
+   "V",
+   "EH",
+   "R",
+   "IY"
+  ],
+  "audio_path": "audio/very_error.wav",
+  "label": "error",
+  "synth_text": "berry",
+  "pattern": "V->B initial stopping"
+ },
+ {
+  "target_word": "love",
+  "canonical": [
+   "L",
+   "AH",
+   "V"
+  ],
+  "audio_path": "audio/love_correct.wav",
+  "label": "correct",
+  "synth_text": "love",
+  "pattern": "V->B final stopping"
+ },
+ {
+  "target_word": "love",
+  "canonical": [
+   "L",
+   "AH",
+   "V"
+  ],
+  "audio_path": "audio/love_error.wav",
+  "label": "error",
+  "synth_text": "lub",
+  "pattern": "V->B final stopping"
+ },
+ {
+  "target_word": "moon",
+  "canonical": [
+   "M",
+   "UW",
+   "N"
+  ],
+  "audio_path": "audio/moon_correct.wav",
+  "label": "correct",
+  "synth_text": "moon",
+  "pattern": "M->N initial nasal confusion"
+ },
+ {
+  "target_word": "moon",
+  "canonical": [
+   "M",
+   "UW",
+   "N"
+  ],
+  "audio_path": "audio/moon_error.wav",
+  "label": "error",
+  "synth_text": "noon",
+  "pattern": "M->N initial nasal confusion"
+ }
+]

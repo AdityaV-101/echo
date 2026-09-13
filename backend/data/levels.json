@@ -1,0 +1,257 @@
+[
+  {
+    "level": 1,
+    "name": "First Sounds: M, B, P",
+    "description": "Early sounds M, B, P in the initial position",
+    "words": [
+      {"word": "mug", "target_phoneme": "M", "position": "initial", "syllables": 1},
+      {"word": "moon", "target_phoneme": "M", "position": "initial", "syllables": 1},
+      {"word": "map", "target_phoneme": "M", "position": "initial", "syllables": 1},
+      {"word": "man", "target_phoneme": "M", "position": "initial", "syllables": 1},
+      {"word": "ball", "target_phoneme": "B", "position": "initial", "syllables": 1},
+      {"word": "bed", "target_phoneme": "B", "position": "initial", "syllables": 1},
+      {"word": "bus", "target_phoneme": "B", "position": "initial", "syllables": 1},
+      {"word": "pig", "target_phoneme": "P", "position": "initial", "syllables": 1},
+      {"word": "pen", "target_phoneme": "P", "position": "initial", "syllables": 1},
+      {"word": "pot", "target_phoneme": "P", "position": "initial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 2,
+    "name": "First Sounds: N, D, W, H",
+    "description": "Early sounds N, D, W, H in the initial position",
+    "words": [
+      {"word": "no", "target_phoneme": "N", "position": "initial", "syllables": 1},
+      {"word": "nose", "target_phoneme": "N", "position": "initial", "syllables": 1},
+      {"word": "net", "target_phoneme": "N", "position": "initial", "syllables": 1},
+      {"word": "dog", "target_phoneme": "D", "position": "initial", "syllables": 1},
+      {"word": "door", "target_phoneme": "D", "position": "initial", "syllables": 1},
+      {"word": "duck", "target_phoneme": "D", "position": "initial", "syllables": 1},
+      {"word": "we", "target_phoneme": "W", "position": "initial", "syllables": 1},
+      {"word": "wet", "target_phoneme": "W", "position": "initial", "syllables": 1},
+      {"word": "hat", "target_phoneme": "HH", "position": "initial", "syllables": 1},
+      {"word": "hop", "target_phoneme": "HH", "position": "initial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 3,
+    "name": "Early Sounds in Final Position + Y",
+    "description": "Early sounds in the final position, plus Y",
+    "words": [
+      {"word": "yes", "target_phoneme": "Y", "position": "initial", "syllables": 1},
+      {"word": "yum", "target_phoneme": "Y", "position": "initial", "syllables": 1},
+      {"word": "web", "target_phoneme": "B", "position": "final", "syllables": 1},
+      {"word": "mud", "target_phoneme": "D", "position": "final", "syllables": 1},
+      {"word": "bed", "target_phoneme": "D", "position": "final", "syllables": 1},
+      {"word": "cup", "target_phoneme": "P", "position": "final", "syllables": 1},
+      {"word": "top", "target_phoneme": "P", "position": "final", "syllables": 1},
+      {"word": "ham", "target_phoneme": "M", "position": "final", "syllables": 1},
+      {"word": "hen", "target_phoneme": "N", "position": "final", "syllables": 1},
+      {"word": "pup", "target_phoneme": "P", "position": "final", "syllables": 1}
+    ]
+  },
+  {
+    "level": 4,
+    "name": "Middle Sounds: T, K",
+    "description": "Middle-developing sounds T and K",
+    "words": [
+      {"word": "top", "target_phoneme": "T", "position": "initial", "syllables": 1},
+      {"word": "ten", "target_phoneme": "T", "position": "initial", "syllables": 1},
+      {"word": "toe", "target_phoneme": "T", "position": "initial", "syllables": 1},
+      {"word": "tub", "target_phoneme": "T", "position": "initial", "syllables": 1},
+      {"word": "cat", "target_phoneme": "K", "position": "initial", "syllables": 1},
+      {"word": "cup", "target_phoneme": "K", "position": "initial", "syllables": 1},
+      {"word": "key", "target_phoneme": "K", "position": "initial", "syllables": 1},
+      {"word": "cow", "target_phoneme": "K", "position": "initial", "syllables": 1},
+      {"word": "cake", "target_phoneme": "K", "position": "initial", "syllables": 1},
+      {"word": "kite", "target_phoneme": "K", "position": "initial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 5,
+    "name": "Middle Sounds: G, F, NG",
+    "description": "Middle-developing sounds G, F, and NG",
+    "words": [
+      {"word": "go", "target_phoneme": "G", "position": "initial", "syllables": 1},
+      {"word": "gum", "target_phoneme": "G", "position": "initial", "syllables": 1},
+      {"word": "gate", "target_phoneme": "G", "position": "initial", "syllables": 1},
+      {"word": "goat", "target_phoneme": "G", "position": "initial", "syllables": 1},
+      {"word": "fan", "target_phoneme": "F", "position": "initial", "syllables": 1},
+      {"word": "fish", "target_phoneme": "F", "position": "initial", "syllables": 1},
+      {"word": "feet", "target_phoneme": "F", "position": "initial", "syllables": 1},
+      {"word": "fun", "target_phoneme": "F", "position": "initial", "syllables": 1},
+      {"word": "king", "target_phoneme": "NG", "position": "final", "syllables": 1},
+      {"word": "wing", "target_phoneme": "NG", "position": "final", "syllables": 1}
+    ]
+  },
+  {
+    "level": 6,
+    "name": "Middle Sounds: V, CH, J",
+    "description": "Middle-developing sounds V, CH, and J",
+    "words": [
+      {"word": "van", "target_phoneme": "V", "position": "initial", "syllables": 1},
+      {"word": "vet", "target_phoneme": "V", "position": "initial", "syllables": 1},
+      {"word": "vase", "target_phoneme": "V", "position": "initial", "syllables": 1},
+      {"word": "five", "target_phoneme": "V", "position": "final", "syllables": 1},
+      {"word": "chin", "target_phoneme": "CH", "position": "initial", "syllables": 1},
+      {"word": "chip", "target_phoneme": "CH", "position": "initial", "syllables": 1},
+      {"word": "cheese", "target_phoneme": "CH", "position": "initial", "syllables": 1},
+      {"word": "jam", "target_phoneme": "JH", "position": "initial", "syllables": 1},
+      {"word": "jet", "target_phoneme": "JH", "position": "initial", "syllables": 1},
+      {"word": "jump", "target_phoneme": "JH", "position": "initial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 7,
+    "name": "Late Sound: L (Initial)",
+    "description": "Late-developing sound L in the initial position",
+    "words": [
+      {"word": "leg", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "lip", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "lake", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "lion", "target_phoneme": "L", "position": "initial", "syllables": 2},
+      {"word": "look", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "leaf", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "log", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "love", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "light", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "line", "target_phoneme": "L", "position": "initial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 8,
+    "name": "Late Sound: S (Initial)",
+    "description": "Late-developing sound S in the initial position",
+    "words": [
+      {"word": "sun", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "sit", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "sock", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "soup", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "sad", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "seal", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "sing", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "six", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "sand", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "soap", "target_phoneme": "S", "position": "initial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 9,
+    "name": "S Final + Z",
+    "description": "S in the final position, plus Z",
+    "words": [
+      {"word": "bus", "target_phoneme": "S", "position": "final", "syllables": 1},
+      {"word": "gas", "target_phoneme": "S", "position": "final", "syllables": 1},
+      {"word": "mouse", "target_phoneme": "S", "position": "final", "syllables": 1},
+      {"word": "house", "target_phoneme": "S", "position": "final", "syllables": 1},
+      {"word": "ice", "target_phoneme": "S", "position": "final", "syllables": 1},
+      {"word": "zoo", "target_phoneme": "Z", "position": "initial", "syllables": 1},
+      {"word": "zip", "target_phoneme": "Z", "position": "initial", "syllables": 1},
+      {"word": "nose", "target_phoneme": "Z", "position": "final", "syllables": 1},
+      {"word": "buzz", "target_phoneme": "Z", "position": "final", "syllables": 1},
+      {"word": "bees", "target_phoneme": "Z", "position": "final", "syllables": 1}
+    ]
+  },
+  {
+    "level": 10,
+    "name": "SH and CH (Initial and Final)",
+    "description": "SH and CH in the initial and final positions",
+    "words": [
+      {"word": "shoe", "target_phoneme": "SH", "position": "initial", "syllables": 1},
+      {"word": "ship", "target_phoneme": "SH", "position": "initial", "syllables": 1},
+      {"word": "shop", "target_phoneme": "SH", "position": "initial", "syllables": 1},
+      {"word": "sheep", "target_phoneme": "SH", "position": "initial", "syllables": 1},
+      {"word": "shell", "target_phoneme": "SH", "position": "initial", "syllables": 1},
+      {"word": "fish", "target_phoneme": "SH", "position": "final", "syllables": 1},
+      {"word": "dish", "target_phoneme": "SH", "position": "final", "syllables": 1},
+      {"word": "wash", "target_phoneme": "SH", "position": "final", "syllables": 1},
+      {"word": "push", "target_phoneme": "SH", "position": "final", "syllables": 1},
+      {"word": "cash", "target_phoneme": "SH", "position": "final", "syllables": 1}
+    ]
+  },
+  {
+    "level": 11,
+    "name": "Late Sound: R (Initial)",
+    "description": "Late-developing sound R in the initial position",
+    "words": [
+      {"word": "red", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "run", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "rain", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "rock", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "ring", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "road", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "rope", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "rug", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "rat", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "roof", "target_phoneme": "R", "position": "initial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 12,
+    "name": "Vocalic R (Medial and Final)",
+    "description": "R blended into a vowel, in the medial and final positions",
+    "words": [
+      {"word": "car", "target_phoneme": "R", "position": "final", "syllables": 1},
+      {"word": "door", "target_phoneme": "R", "position": "final", "syllables": 1},
+      {"word": "bear", "target_phoneme": "R", "position": "final", "syllables": 1},
+      {"word": "chair", "target_phoneme": "R", "position": "final", "syllables": 1},
+      {"word": "hair", "target_phoneme": "R", "position": "final", "syllables": 1},
+      {"word": "four", "target_phoneme": "R", "position": "final", "syllables": 1},
+      {"word": "ear", "target_phoneme": "R", "position": "final", "syllables": 1},
+      {"word": "jar", "target_phoneme": "R", "position": "final", "syllables": 1},
+      {"word": "corn", "target_phoneme": "R", "position": "medial", "syllables": 1},
+      {"word": "girl", "target_phoneme": "R", "position": "medial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 13,
+    "name": "TH: Voiced and Voiceless",
+    "description": "The voiced and voiceless TH sounds",
+    "words": [
+      {"word": "thumb", "target_phoneme": "TH", "position": "initial", "syllables": 1},
+      {"word": "think", "target_phoneme": "TH", "position": "initial", "syllables": 1},
+      {"word": "thin", "target_phoneme": "TH", "position": "initial", "syllables": 1},
+      {"word": "thick", "target_phoneme": "TH", "position": "initial", "syllables": 1},
+      {"word": "tooth", "target_phoneme": "TH", "position": "final", "syllables": 1},
+      {"word": "bath", "target_phoneme": "TH", "position": "final", "syllables": 1},
+      {"word": "math", "target_phoneme": "TH", "position": "final", "syllables": 1},
+      {"word": "this", "target_phoneme": "DH", "position": "initial", "syllables": 1},
+      {"word": "that", "target_phoneme": "DH", "position": "initial", "syllables": 1},
+      {"word": "they", "target_phoneme": "DH", "position": "initial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 14,
+    "name": "S-Blends and L-Blends",
+    "description": "Consonant clusters with S and L",
+    "words": [
+      {"word": "stop", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "star", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "spoon", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "snake", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "smile", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "sleep", "target_phoneme": "S", "position": "initial", "syllables": 1},
+      {"word": "black", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "blue", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "clock", "target_phoneme": "L", "position": "initial", "syllables": 1},
+      {"word": "glue", "target_phoneme": "L", "position": "initial", "syllables": 1}
+    ]
+  },
+  {
+    "level": 15,
+    "name": "R-Blends and Multisyllabic Words",
+    "description": "Consonant clusters with R, and longer words",
+    "words": [
+      {"word": "tree", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "train", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "green", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "frog", "target_phoneme": "R", "position": "initial", "syllables": 1},
+      {"word": "dragon", "target_phoneme": "R", "position": "initial", "syllables": 2},
+      {"word": "brother", "target_phoneme": "R", "position": "initial", "syllables": 2},
+      {"word": "elephant", "target_phoneme": "L", "position": "medial", "syllables": 3},
+      {"word": "computer", "target_phoneme": "P", "position": "medial", "syllables": 3},
+      {"word": "butterfly", "target_phoneme": "T", "position": "medial", "syllables": 3},
+      {"word": "umbrella", "target_phoneme": "R", "position": "medial", "syllables": 3}
+    ]
+  }
+]

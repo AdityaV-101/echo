@@ -1,0 +1,12 @@
+{
+  "_comment": "Map from target ARPABET phoneme to a list of model-vocab IPA symbols that must NOT be counted as errors when they're the top competitor for that target - documented, common L1-transfer accent variants (seeded with Indian English patterns per explicit request), not a general 'anything goes' list. Every variant symbol here was verified to exist in facebook/wav2vec2-lv-60-espeak-cv-ft's own tokenizer vocabulary (see backend/model_vocab.py and SETUP_NOTES.md) - a variant that isn't a real vocab symbol could never match a competitor and would be a silent no-op, which defeats the point of this file. One seed entry from the original request (DH -> d̪, dental d) was dropped for exactly that reason: that exact IPA symbol does not exist anywhere in this model's ~388-symbol vocabulary (confirmed by direct search), unlike its voiceless counterpart t̪ (dental t, kept under TH) which does.",
+  "V": ["w"],
+  "W": ["v"],
+  "TH": ["t̪", "t"],
+  "DH": ["d"],
+  "D": ["ɖ"],
+  "T": ["ʈ"],
+  "Z": ["dʒ"],
+  "AE": ["ɛ", "a"],
+  "R": ["ɾ", "r"]
+}
