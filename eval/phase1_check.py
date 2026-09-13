@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 sys.path.insert(0, str(Path(__file__).parent))
 
-from harness import evaluate, format_overall  # noqa: E402
+from harness import bootstrap_ci_by_speaker, evaluate_from_rows, flatten_rows, format_overall  # noqa: E402
 
 EVAL_DIR = Path(__file__).parent
 
@@ -64,15 +64,24 @@ SLICES = {
 }
 
 
+CI_METRICS = ("precision", "recall", "pr_auc", "frr", "far")
+
+
 def main():
     records = load_dev_cache()
     print(f"Loaded {len(records)} dev-split words\n")
 
     report = {}
     for slice_name, slice_filter in SLICES.items():
-        result = evaluate(records, predict_phase1_naive, slice_filter=slice_filter)
+        rows = flatten_rows(records, predict_phase1_naive, slice_filter=slice_filter)
+        labeled_rows = [r for r in rows if r["label"] is not None]
+        result = evaluate_from_rows(rows)
+        ci = bootstrap_ci_by_speaker(labeled_rows, metric_names=CI_METRICS, n_boot=2000, seed=0)
+        result["ci_by_speaker_95"] = {k: list(v) for k, v in ci.items()}
         report[slice_name] = result
         print(format_overall(f"phase1_naive ({slice_name})", result["overall"]))
+        ci_str = "  ".join(f"{m}={result['overall'][m]:.3f} [{ci[m][0]:.3f}, {ci[m][1]:.3f}]" for m in CI_METRICS)
+        print(f"   95% CI (bootstrap by speaker): {ci_str}")
 
     with open(EVAL_DIR / "phase1_check.json", "w") as f:
         json.dump(report, f, indent=1)

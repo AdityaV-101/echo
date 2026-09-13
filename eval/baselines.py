@@ -14,7 +14,7 @@ from calibration import classify_z_score  # noqa: E402
 from gop_config import FLOOR_SIGMA, GLOBAL_PRIOR, GLOBAL_PRIOR_DEFAULT  # noqa: E402
 from hypothesis_scorer import Candidate, apply_prior_and_decide, _levenshtein_align  # noqa: E402
 
-from harness import evaluate, format_overall  # noqa: E402
+from harness import bootstrap_ci_by_speaker, evaluate_from_rows, flatten_rows, format_overall  # noqa: E402
 
 EVAL_DIR = Path(__file__).parent
 
@@ -113,7 +113,14 @@ BASELINES = {
 }
 
 
-def main():
+CI_METRICS = ("precision", "recall", "pr_auc", "frr", "far")
+
+
+def _fmt_ci(name: str, point: float, ci: tuple[float, float]) -> str:
+    return f"{name}={point:.3f} [{ci[0]:.3f}, {ci[1]:.3f}]"
+
+
+def main(n_boot: int = 2000):
     records = load_dev_cache()
     print(f"Loaded {len(records)} dev-split words "
           f"({sum(1 for r in records if r['is_child'])} child, "
@@ -124,9 +131,15 @@ def main():
         print(f"=== slice: {slice_name} ===")
         report[slice_name] = {}
         for baseline_name, predict_fn in BASELINES.items():
-            result = evaluate(records, predict_fn, slice_filter=slice_filter)
+            rows = flatten_rows(records, predict_fn, slice_filter=slice_filter)
+            labeled_rows = [r for r in rows if r["label"] is not None]
+            result = evaluate_from_rows(rows)
+            ci = bootstrap_ci_by_speaker(labeled_rows, metric_names=CI_METRICS, n_boot=n_boot, seed=0)
+            result["ci_by_speaker_95"] = {k: list(v) for k, v in ci.items()}
             report[slice_name][baseline_name] = result
             print(format_overall(baseline_name, result["overall"]))
+            ci_str = "  ".join(_fmt_ci(m, result["overall"][m], ci[m]) for m in CI_METRICS)
+            print(f"   95% CI (bootstrap by speaker, n_boot={n_boot}): {ci_str}")
         print()
 
     out_path = EVAL_DIR / "baselines.json"

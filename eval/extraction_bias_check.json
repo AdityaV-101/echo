@@ -1,0 +1,23 @@
+{
+ "n_original_dev_speakers": 24,
+ "n_survived_dev_speakers": 24,
+ "dropped_speakers": [],
+ "n_original_words": 3036,
+ "n_survived_words": 3036,
+ "band_counts": {
+  "correct (2.0)": {
+   "original": 6840,
+   "survived": 6840
+  },
+  "ambiguous (1.0-2.0)": {
+   "original": 1310,
+   "survived": 1310
+  },
+  "error (<=1.0)": {
+   "original": 851,
+   "survived": 851
+  }
+ },
+ "error_token_drop_rate": 0.0,
+ "correct_token_drop_rate": 0.0
+}

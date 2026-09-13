@@ -29,8 +29,16 @@ dicts, one per canonical position, each:
 "unclear" is this scorer's abstain: excluded from FRR/FAR/precision/recall/
 substitution-naming, counted only in abstain_rate and coverage. A scorer
 with no abstain concept (the current GOP z-score path) simply never emits it.
+
+At the positive-token counts this project actually has (tens, not
+thousands, per slice - see Phase 0's child-slice base rate), a point
+estimate on its own invites reading noise as signal. bootstrap_ci_by_speaker
+resamples SPEAKERS with replacement (never individual tokens - a speaker's
+attempts are correlated with each other, so resampling tokens directly
+would understate the true uncertainty), which is why every row this module
+produces carries its speaker.
 """
-import math
+import random
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -74,8 +82,43 @@ def _ground_truth_substitution(record: dict, index: int) -> Optional[tuple[str, 
     return None
 
 
+def flatten_rows(
+    records: list[dict],
+    predict_fn: PredictFn,
+    slice_filter: Optional[Callable[[dict], bool]] = None,
+) -> list[dict]:
+    """One row per phoneme occurrence (ambiguous-label rows included, with
+    label=None - callers filter those out, but keeping them here lets a
+    caller compute ambiguous-band coverage without a second pass). Every row
+    carries its speaker, which is what makes bootstrap_ci_by_speaker (and
+    any other speaker-grouped analysis - the k-of-n aggregation, the
+    extraction-bias check) possible without re-deriving predictions."""
+    rows = []
+    for record in records:
+        if slice_filter is not None and not slice_filter(record):
+            continue
+        canonical = record["canonical"]
+        predictions = predict_fn(record)
+        assert len(predictions) == len(canonical), (
+            f"predict_fn returned {len(predictions)} predictions for "
+            f"{len(canonical)} canonical phonemes ({record.get('utt_id')}/{record.get('word_index')})"
+        )
+        length = len(canonical)
+        for i, (phone, acc, pred) in enumerate(zip(canonical, record["phones_accuracy"], predictions)):
+            rows.append({
+                "utt_id": record.get("utt_id"), "word_index": record.get("word_index"), "index": i,
+                "speaker": record.get("speaker"),
+                "phone": phone, "position": _word_position(i, length),
+                "label": label_for_accuracy(acc),
+                "status": pred["status"], "score": pred["score"], "heard": pred["heard"],
+                "gt_sub": _ground_truth_substitution(record, i),
+            })
+    return rows
+
+
 class _Accumulator:
-    """One instance per reported slice (overall, per-phoneme, per-position)."""
+    """One instance per reported slice (overall, per-phoneme, per-position,
+    or one bootstrap resample)."""
 
     def __init__(self):
         self.tp = self.fp = self.fn = self.tn = 0
@@ -121,8 +164,13 @@ class _Accumulator:
             # "unknown" / "ambiguous" ground truth: skip, can't judge naming
             # against an annotator's own uncertainty.
 
+    def add_row(self, row: dict):
+        self.add(row["label"], row["status"], row["score"], row["heard"], row["gt_sub"])
+
     def metrics(self) -> dict:
         considered = self.tp + self.fp + self.fn + self.tn
+        n_positive = self.tp + self.fn  # actual errors among considered (non-unclear) rows
+        n_negative = self.fp + self.tn  # actual corrects among considered rows
         precision = self.tp / (self.tp + self.fp) if (self.tp + self.fp) else float("nan")
         recall = self.tp / (self.tp + self.fn) if (self.tp + self.fn) else float("nan")
         f1 = (
@@ -145,6 +193,8 @@ class _Accumulator:
             "n_total": self.n_total,
             "n_ambiguous_excluded": self.n_ambiguous,
             "n_unclear": self.n_unclear,
+            "n_positive": n_positive, "n_negative": n_negative,
+            "base_rate": n_positive / considered if considered else float("nan"),
             "coverage": coverage,
             "abstain_rate": abstain_rate,
             "tp": self.tp, "fp": self.fp, "fn": self.fn, "tn": self.tn,
@@ -156,6 +206,29 @@ class _Accumulator:
         }
 
 
+def _accumulate(rows: list[dict]) -> _Accumulator:
+    acc = _Accumulator()
+    for row in rows:
+        acc.add_row(row)
+    return acc
+
+
+def evaluate_from_rows(rows: list[dict]) -> dict:
+    """Same output shape as evaluate() (overall/by_phoneme/by_position),
+    from an already-flattened row list - the shared implementation
+    evaluate() and bootstrap_ci_by_speaker both build on."""
+    by_phoneme: dict[str, list[dict]] = {}
+    by_position: dict[str, list[dict]] = {}
+    for row in rows:
+        by_phoneme.setdefault(row["phone"], []).append(row)
+        by_position.setdefault(row["position"], []).append(row)
+    return {
+        "overall": _accumulate(rows).metrics(),
+        "by_phoneme": {p: _accumulate(rs).metrics() for p, rs in sorted(by_phoneme.items())},
+        "by_position": {pos: _accumulate(rs).metrics() for pos, rs in sorted(by_position.items())},
+    }
+
+
 def evaluate(
     records: list[dict],
     predict_fn: PredictFn,
@@ -165,40 +238,61 @@ def evaluate(
     slice_filter, e.g. lambda r: r["is_child"]), and returns overall metrics
     plus a breakdown per target (canonical) phoneme and per structural word
     position (initial/medial/final/single)."""
-    overall = _Accumulator()
-    by_phoneme: dict[str, _Accumulator] = {}
-    by_position: dict[str, _Accumulator] = {}
+    rows = flatten_rows(records, predict_fn, slice_filter)
+    return evaluate_from_rows(rows)
 
-    for record in records:
-        if slice_filter is not None and not slice_filter(record):
+
+def bootstrap_ci_by_speaker(
+    rows: list[dict],
+    metric_names: tuple[str, ...] = ("precision", "recall", "pr_auc", "frr", "far", "f1"),
+    n_boot: int = 2000,
+    seed: int = 0,
+) -> dict[str, tuple[float, float]]:
+    """95% CI (2.5th/97.5th percentile) for each named metric, resampled by
+    SPEAKER with replacement - a drawn speaker contributes every one of
+    their rows as a block, so within-speaker correlation (the same child's
+    attempts are not independent trials) is preserved in the resample
+    rather than washed out by resampling individual tokens. NaN draws
+    (e.g. a resample with zero positives, undefined precision) are dropped
+    from that metric's percentile calculation rather than treated as 0."""
+    by_speaker: dict[str, list[dict]] = {}
+    for row in rows:
+        by_speaker.setdefault(row["speaker"], []).append(row)
+    speakers = list(by_speaker.keys())
+    n_sp = len(speakers)
+    if n_sp == 0:
+        return {name: (float("nan"), float("nan")) for name in metric_names}
+
+    rng = random.Random(seed)
+    samples: dict[str, list[float]] = {name: [] for name in metric_names}
+    for _ in range(n_boot):
+        drawn = [speakers[rng.randrange(n_sp)] for _ in range(n_sp)]
+        boot_rows = []
+        for sp in drawn:
+            boot_rows.extend(by_speaker[sp])
+        m = _accumulate(boot_rows).metrics()
+        for name in metric_names:
+            v = m[name]
+            if v == v:  # not NaN
+                samples[name].append(v)
+
+    ci = {}
+    for name in metric_names:
+        vals = sorted(samples[name])
+        if not vals:
+            ci[name] = (float("nan"), float("nan"))
             continue
-        canonical = record["canonical"]
-        predictions = predict_fn(record)
-        assert len(predictions) == len(canonical), (
-            f"predict_fn returned {len(predictions)} predictions for "
-            f"{len(canonical)} canonical phonemes ({record.get('utt_id')}/{record.get('word_index')})"
-        )
-        length = len(canonical)
-        for i, (phone, acc, pred) in enumerate(zip(canonical, record["phones_accuracy"], predictions)):
-            label = label_for_accuracy(acc)
-            gt_sub = _ground_truth_substitution(record, i)
-            status, score, heard = pred["status"], pred["score"], pred["heard"]
-
-            overall.add(label, status, score, heard, gt_sub)
-            by_phoneme.setdefault(phone, _Accumulator()).add(label, status, score, heard, gt_sub)
-            position = _word_position(i, length)
-            by_position.setdefault(position, _Accumulator()).add(label, status, score, heard, gt_sub)
-
-    return {
-        "overall": overall.metrics(),
-        "by_phoneme": {p: acc.metrics() for p, acc in sorted(by_phoneme.items())},
-        "by_position": {pos: acc.metrics() for pos, acc in sorted(by_position.items())},
-    }
+        lo = vals[max(0, int(0.025 * len(vals)))]
+        hi = vals[min(len(vals) - 1, int(0.975 * len(vals)))]
+        ci[name] = (lo, hi)
+    return ci
 
 
 def format_overall(name: str, m: dict) -> str:
     return (
-        f"{name:28} n={m['n_total']:5} coverage={m['coverage']:.1%} abstain={m['abstain_rate']:.1%}  "
+        f"{name:28} n={m['n_total']:5} P={m['n_positive']:4} N={m['n_negative']:4} base_rate={m['base_rate']:.1%} "
+        f"coverage={m['coverage']:.1%} abstain={m['abstain_rate']:.1%}  "
+        f"TP={m['tp']:3} FP={m['fp']:3} FN={m['fn']:3}  "
         f"FRR={m['frr']:.1%} FAR={m['far']:.1%} precision={m['precision']:.1%} recall={m['recall']:.1%} "
         f"f1={m['f1']:.3f} pr_auc={m['pr_auc']:.3f} naming_acc={m['substitution_naming_accuracy']:.1%} "
         f"(n={m['substitution_naming_n']})"
