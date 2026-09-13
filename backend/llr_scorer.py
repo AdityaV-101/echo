@@ -128,24 +128,23 @@ def generate_local_candidates(canonical: list[str], index: int) -> list[LocalCan
     return candidates
 
 
-def _score_sequences_batched(
-    log_probs: torch.Tensor, sequences: list[list[str]], vocab: dict[str, int], blank_id: int,
+def _score_vocab_id_sequences_batched(
+    log_probs: torch.Tensor, id_sequences: list[list[int]], blank_id: int,
 ) -> tuple[list[float], list[bool]]:
-    """One batched CTC call (the full forward-algorithm marginal, not a
-    Viterbi path - torch's ctc_loss already computes this) for every unique
-    sequence. Returns (log_likelihoods, feasible) parallel to `sequences` -
-    feasible[i] is False (and log_likelihoods[i] is -inf) when
-    _min_frames_for_ctc says this sequence cannot possibly align within the
-    available frames, checked BEFORE calling ctc_loss so zero_infinity's
-    silent 0-loss substitution never gets a chance to produce a winner."""
+    """Same batched-CTC-marginal computation as _score_sequences_batched,
+    one level lower: takes model-vocab ids directly rather than ARPABET
+    sequences, so callers that already have vocab ids (e.g. a free CTC
+    greedy decode, which never touches ARPABET at all) don't need to invent
+    a fake ARPABET sequence just to reuse this. Returns (log_likelihoods,
+    feasible), -inf/False for anything _min_frames_for_ctc rules out before
+    ever calling ctc_loss (bug 3's fix - see module docstring)."""
     T, V = log_probs.shape
-    n = len(sequences)
+    n = len(id_sequences)
 
-    target_ids = [model_vocab.arpabet_sequence_to_vocab_ids(seq, vocab) for seq in sequences]
-    feasible = [_min_frames_for_ctc(ids) <= T for ids in target_ids]
+    feasible = [_min_frames_for_ctc(ids) <= T for ids in id_sequences]
 
-    target_seqs = [torch.tensor(ids if ids else [0], dtype=torch.long) for ids in target_ids]
-    target_lengths = torch.tensor([len(ids) for ids in target_ids], dtype=torch.long)
+    target_seqs = [torch.tensor(ids if ids else [0], dtype=torch.long) for ids in id_sequences]
+    target_lengths = torch.tensor([len(ids) for ids in id_sequences], dtype=torch.long)
     targets_padded = torch.nn.utils.rnn.pad_sequence(target_seqs, batch_first=True, padding_value=0)
 
     log_probs_batched = log_probs.unsqueeze(1).expand(T, n, V).contiguous()
@@ -158,6 +157,15 @@ def _score_sequences_batched(
     log_likelihoods = (-nll).tolist()
     log_likelihoods = [ll if ok else float("-inf") for ll, ok in zip(log_likelihoods, feasible)]
     return log_likelihoods, feasible
+
+
+def _score_sequences_batched(
+    log_probs: torch.Tensor, sequences: list[list[str]], vocab: dict[str, int], blank_id: int,
+) -> tuple[list[float], list[bool]]:
+    """ARPABET-sequence wrapper around _score_vocab_id_sequences_batched -
+    see that function for what this actually computes."""
+    target_ids = [model_vocab.arpabet_sequence_to_vocab_ids(seq, vocab) for seq in sequences]
+    return _score_vocab_id_sequences_batched(log_probs, target_ids, blank_id)
 
 
 def _local_frame_span(spans, index: int, n_frames: int) -> tuple[int, int]:
