@@ -14,14 +14,22 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("speechpal.main")
 
 USE_REAL_SCORER = os.environ.get("USE_REAL_SCORER") == "1"
-if USE_REAL_SCORER:
+USE_PHASE3_SCORER = os.environ.get("USE_PHASE3_SCORER") == "1"
+if USE_PHASE3_SCORER:
+    from scorer_phase3 import score_word
+
+    logger.info(
+        "Using PHASE 3 scorer (paired-LLR/GOP features -> frozen classifier -> "
+        "abstention-heavy k-of-n decision, see eval/phase3_protocol.md)."
+    )
+elif USE_REAL_SCORER:
     from scorer import score_word
 
-    logger.info("Using REAL scorer (wav2vec2 phoneme recognizer).")
+    logger.info("Using REAL scorer (wav2vec2 phoneme recognizer, GOP + z-score).")
 else:
     from scorer_stub import score_word
 
-    logger.info("Using STUB scorer (fake results). Set USE_REAL_SCORER=1 for the real one.")
+    logger.info("Using STUB scorer (fake results). Set USE_REAL_SCORER=1 or USE_PHASE3_SCORER=1 for a real one.")
 
 DATA_DIR = Path(__file__).parent / "data"
 with open(DATA_DIR / "levels.json") as f:
@@ -150,6 +158,11 @@ async def score(
         except OSError:
             pass
 
+    # An unusable recording (Phase 4's gate) was never actually scored - it
+    # doesn't count as an attempt and has no percent_correct to record.
+    if result.get("status") == "unclear_recording":
+        return result
+
     db.record_attempt(user_id, word, level, result["percent_correct"], result["results"])
 
     # "wrong" is a confirmed error; "borderline" is genuinely ambiguous and
@@ -175,6 +188,13 @@ def advance_level(level: int, payload: dict):
     total_words = len(LEVEL_BY_NUMBER[level]["words"])
     progress = db.advance_level_progress(user_id, level, total_words, len(LEVELS))
     return progress
+
+
+@app.get("/api/therapist/review-queue")
+def therapist_review_queue(user_id: str | None = None):
+    """Phase 5: k-of-n corroborated errors only - a single tentative
+    attempt never appears here. See backend/decision.py."""
+    return db.get_therapist_review_queue(user_id)
 
 
 @app.get("/api/phoneme-lookup")

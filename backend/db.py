@@ -88,6 +88,48 @@ CREATE TABLE IF NOT EXISTS user_process_counts (
     count INTEGER NOT NULL,
     PRIMARY KEY (user_id, process)
 );
+
+-- Phase 3/5: per-user, per-phoneme running baseline for each of the
+-- classifier's speaker-relative features (llr_best, gop_i, gop_lpr_i,
+-- dur_z - see backend/child_calibration.py), Welford accumulator per
+-- (user, phoneme, feature) triple. Generic (feature name is a column, not
+-- a dedicated table per feature) since Phase 3 defines exactly these four
+-- but a future phase adding a fifth shouldn't need a schema migration.
+CREATE TABLE IF NOT EXISTS feature_baseline (
+    user_id TEXT NOT NULL,
+    phoneme TEXT NOT NULL,
+    feature TEXT NOT NULL,
+    n INTEGER NOT NULL,
+    mean_value REAL NOT NULL,
+    m2 REAL NOT NULL,
+    PRIMARY KEY (user_id, phoneme, feature)
+);
+
+-- Phase 5: k-of-n evidence aggregation history. One row per single-attempt
+-- verdict at a given target phoneme, oldest-first per (user, phoneme) -
+-- backend/decision.py windows the last n to decide whether a tentative
+-- "candidate_wrong" verdict is corroborated enough to confirm.
+CREATE TABLE IF NOT EXISTS attempt_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    phoneme TEXT NOT NULL,
+    status TEXT NOT NULL,
+    probability REAL NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+-- Phase 5: confirmed errors (k-of-n corroborated), for the therapist panel.
+-- Never populated from a single attempt - see backend/decision.py.
+CREATE TABLE IF NOT EXISTS therapist_review_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    phoneme TEXT NOT NULL,
+    n_wrong INTEGER NOT NULL,
+    n_window INTEGER NOT NULL,
+    mean_probability REAL NOT NULL,
+    created_at TEXT NOT NULL,
+    reviewed INTEGER NOT NULL DEFAULT 0
+);
 """
 
 
@@ -205,6 +247,66 @@ def upsert_speaker_baseline(user_id: str, phoneme: str, mean_gop: float, std_gop
             """,
             (user_id, phoneme, mean_gop, std_gop, n, m2, mean_gop, std_gop, n, m2),
         )
+
+
+def get_feature_baseline(user_id: str, phoneme: str, feature: str) -> dict | None:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT n, mean_value, m2 FROM feature_baseline WHERE user_id = ? AND phoneme = ? AND feature = ?",
+            (user_id, phoneme, feature),
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def upsert_feature_baseline(user_id: str, phoneme: str, feature: str, n: int, mean_value: float, m2: float):
+    with get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO feature_baseline (user_id, phoneme, feature, n, mean_value, m2) VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id, phoneme, feature) DO UPDATE SET n = ?, mean_value = ?, m2 = ?
+            """,
+            (user_id, phoneme, feature, n, mean_value, m2, n, mean_value, m2),
+        )
+
+
+def record_attempt_history(user_id: str, phoneme: str, status: str, probability: float):
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO attempt_history (user_id, phoneme, status, probability, created_at) VALUES (?, ?, ?, ?, ?)",
+            (user_id, phoneme, status, probability, now_iso()),
+        )
+
+
+def get_recent_attempt_history(user_id: str, phoneme: str, limit: int) -> list[dict]:
+    """Most recent `limit` attempts at this phoneme, oldest first (the
+    order k-of-n windowing expects)."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT status, probability, created_at FROM attempt_history "
+            "WHERE user_id = ? AND phoneme = ? ORDER BY id DESC LIMIT ?",
+            (user_id, phoneme, limit),
+        ).fetchall()
+        return [dict(r) for r in reversed(rows)]
+
+
+def add_to_therapist_review_queue(user_id: str, phoneme: str, n_wrong: int, n_window: int, mean_probability: float):
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO therapist_review_queue (user_id, phoneme, n_wrong, n_window, mean_probability, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (user_id, phoneme, n_wrong, n_window, mean_probability, now_iso()),
+        )
+
+
+def get_therapist_review_queue(user_id: str | None = None) -> list[dict]:
+    with get_conn() as conn:
+        if user_id:
+            rows = conn.execute(
+                "SELECT * FROM therapist_review_queue WHERE user_id = ? ORDER BY created_at DESC", (user_id,),
+            ).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM therapist_review_queue ORDER BY created_at DESC").fetchall()
+        return [dict(r) for r in rows]
 
 
 def update_current_level(user_id: str, level: int):

@@ -1,0 +1,113 @@
+{
+ "frr_constraint": 0.05,
+ "coverage_precision_curve": [
+  {
+   "threshold": 0.1,
+   "n_flagged": 2205,
+   "precision": 0.08435374149659863,
+   "recall": 0.6348122866894198,
+   "frr": 0.1251782503565007
+  },
+  {
+   "threshold": 0.15,
+   "n_flagged": 1356,
+   "precision": 0.11061946902654868,
+   "recall": 0.5119453924914675,
+   "frr": 0.07477214954429909
+  },
+  {
+   "threshold": 0.2,
+   "n_flagged": 908,
+   "precision": 0.13766519823788545,
+   "recall": 0.42662116040955633,
+   "frr": 0.048546097092194186
+  },
+  {
+   "threshold": 0.3,
+   "n_flagged": 445,
+   "precision": 0.20224719101123595,
+   "recall": 0.30716723549488056,
+   "frr": 0.022010044020088042
+  },
+  {
+   "threshold": 0.4,
+   "n_flagged": 216,
+   "precision": 0.30092592592592593,
+   "recall": 0.22184300341296928,
+   "frr": 0.009362018724037448
+  },
+  {
+   "threshold": 0.5,
+   "n_flagged": 114,
+   "precision": 0.39473684210526316,
+   "recall": 0.15358361774744028,
+   "frr": 0.004278008556017112
+  },
+  {
+   "threshold": 0.6,
+   "n_flagged": 71,
+   "precision": 0.36619718309859156,
+   "recall": 0.08873720136518772,
+   "frr": 0.00279000558001116
+  },
+  {
+   "threshold": 0.7,
+   "n_flagged": 39,
+   "precision": 0.46153846153846156,
+   "recall": 0.06143344709897611,
+   "frr": 0.001302002604005208
+  },
+  {
+   "threshold": 0.75,
+   "n_flagged": 28,
+   "precision": 0.5357142857142857,
+   "recall": 0.051194539249146756,
+   "frr": 0.000806001612003224
+  },
+  {
+   "threshold": 0.8,
+   "n_flagged": 19,
+   "precision": 0.6842105263157895,
+   "recall": 0.04436860068259386,
+   "frr": 0.000372000744001488
+  },
+  {
+   "threshold": 0.85,
+   "n_flagged": 14,
+   "precision": 0.6428571428571429,
+   "recall": 0.030716723549488054,
+   "frr": 0.00031000062000124
+  },
+  {
+   "threshold": 0.9,
+   "n_flagged": 5,
+   "precision": 0.8,
+   "recall": 0.013651877133105802,
+   "frr": 6.2000124000248e-05
+  },
+  {
+   "threshold": 0.95,
+   "n_flagged": 2,
+   "precision": 1.0,
+   "recall": 0.006825938566552901,
+   "frr": 0.0
+  }
+ ],
+ "maximize_recall_subject_to_frr_constraint": {
+  "threshold": 0.2,
+  "n_flagged": 908,
+  "precision": 0.13766519823788545,
+  "recall": 0.42662116040955633,
+  "frr": 0.048546097092194186
+ },
+ "t_error": 0.8,
+ "t_correct": 0.1,
+ "chosen_operating_point": {
+  "threshold": 0.8,
+  "n_flagged": 19,
+  "precision": 0.6842105263157895,
+  "recall": 0.04436860068259386,
+  "frr": 0.000372000744001488
+ },
+ "note": "T_ERROR is a policy choice (strong-evidence bar, comfortably inside FRR<=0.05, not the bare minimum-compliant threshold) made explicit because the 'maximize recall subject to FRR<=0.05' rule's own answer (see maximize_recall_subject_to_frr_constraint) would collapse the abstain band - single-attempt recall is deliberately traded for k-of-n corroboration across repeated practice attempts. T_CORRECT is a wide-abstain-band policy choice, not derived from this curve."
+}

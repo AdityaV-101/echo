@@ -1,0 +1,33 @@
+{
+ "frozen_date": "2026-09-13",
+ "numeric_features": [
+  "llr_best",
+  "llr_margin",
+  "gop_i",
+  "gop_lpr_i",
+  "dur_z",
+  "entropy",
+  "ll_canonical_per_frame",
+  "free_decode_gap",
+  "llr_best_speaker_rel",
+  "gop_i_speaker_rel",
+  "gop_lpr_i_speaker_rel",
+  "dur_z_speaker_rel",
+  "syllable_count",
+  "frame_count_word",
+  "llr_deletion",
+  "llr_second_best",
+  "has_deletion_candidate",
+  "has_second_best_candidate"
+ ],
+ "categorical_features": [
+  "expected",
+  "position",
+  "llr_best_origin",
+  "top_competitor"
+ ],
+ "n_training_rows": 40426,
+ "n_training_speakers": 125,
+ "class_weight": null,
+ "notes": "Frozen per eval/phase3_protocol.md's modeling freeze - trained on all pooled subtrain+dev (125 speakers). Not selected via a fresh sweep against this artifact; the model class and features were fixed by the CV/ablation work preceding the freeze."
+}

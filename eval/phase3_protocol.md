@@ -25,6 +25,59 @@ The frozen artifacts, as committed at this date: `backend/llr_scorer.py`,
 Phases 4 and 5 proceed using these frozen artifacts and the measurements
 already made - they do not re-open model selection.
 
+## Phase 4 + Phase 5, implemented
+
+Proceeding regardless of the within-phoneme result, per instruction -
+neither phase depends on beating GOP z-score.
+
+**Phase 4** (`backend/recording_gate.py`): rejects on `free_decode_gap`
+exceeding ~mean+3.3*std of its distribution among correct productions
+(1.5, computed directly, not swept against a downstream metric - see the
+module's docstring). Returns a distinct `unclear_recording` status,
+handled in `main.py` by skipping DB bookkeeping entirely rather than
+recording a null-percent attempt (a real bug caught and fixed during
+integration - the original code path would have violated the `attempts`
+table's `NOT NULL` constraint).
+
+**Phase 5** (`backend/decision.py`), abstention-heavy by explicit
+instruction, not the original spec's "maximize recall subject to
+FRR<=0.05":
+
+- `eval/derive_decision_thresholds.py` found that rule's own answer
+  (T=0.20, FRR=0.0485, recall=0.427) sits right at the edge of the
+  constraint and would collapse the abstain band. **T_ERROR=0.80** is used
+  instead - a strong-evidence bar comfortably inside the constraint
+  (FRR=0.0004, precision=0.684, recall=0.044 on a single attempt).
+  **T_CORRECT=0.10** keeps the abstain band wide by design.
+- A single attempt crossing T_ERROR is only "candidate_wrong" - tentative.
+  `backend/aggregation.py`'s k-of-n (2-of-3 default) corroborates across a
+  child's repeated attempts at the same phoneme before a `confirmed_error`
+  is written to `therapist_review_queue` (`GET /api/therapist/review-queue`).
+  A single attempt never names a specific error to the child or the
+  therapist - child-facing feedback (`scorer_phase3._generate_feedback`)
+  stays encouraging and non-committal until corroborated, per Phase 8's
+  product rule.
+- Per-child calibration (`backend/child_calibration.py`): the four
+  speaker-relative features (llr_best, gop_i, gop_lpr_i, dur_z) are
+  centered on this child's own running per-phoneme mean (Welford, reusing
+  `calibration.py`'s existing algorithm) once they have
+  `MIN_SPEAKER_SAMPLES`, falling back to the global per-phoneme mean from
+  the frozen training data before that - not gated on a warm-up-word game
+  (that's frontend/product design, out of scope this session).
+- The frozen model is exported once (`eval/export_final_model.py`,
+  trained on all 125 pooled speakers) to `backend/data/phase3_model/` and
+  loaded at inference time - not refit per request.
+- Wired into `backend/main.py` behind `USE_PHASE3_SCORER=1` (same
+  selection pattern as the existing `USE_REAL_SCORER`), so the GOP
+  z-score path (`scorer.py`) is not deleted - per the rebuild's own rule
+  4 ("when the rebuild beats the old path, delete the loser"), it hasn't
+  been shown to beat it on the measure that matters (within-phoneme,
+  child slice), so both remain available.
+- End-to-end integration smoke-tested directly against real speechocean762
+  R-target words through `scorer_phase3.score_word` and `main.py`'s
+  downstream DB bookkeeping (not just unit-level) - passed, and is what
+  caught the `unclear_recording`/`NOT NULL` bug above.
+
 
 Written in response to review feedback on Phase 0, before touching a
 classifier. Every number cited here comes from `eval/baselines.json` /
