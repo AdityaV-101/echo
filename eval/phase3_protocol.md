@@ -80,40 +80,97 @@ matter - to be decided from the actual fold statistics, not assumed).
   feature-extracted during Phases 0-2, which only needed the dev split for
   checkpointing) - done, 38,075 rows.
 
-### Actual CV results (`eval/train_phase3.py`)
+### Actual CV results (`eval/train_phase3.py`, per-fold StandardScaler - see preprocessing audit below)
 
 Grouped 5-fold CV, pooled subtrain+dev (47,076 rows, 125 speakers),
-`class_weight="balanced"` for both models:
+`class_weight="balanced"` for both models, scaler refit inside each fold:
 
-| model | fold PR-AUCs (child slice) | mean | std | min | max |
+| model | fold PR-AUCs (child) | mean | std | fold prevalences | fold lifts |
 |---|---|---|---|---|---|
-| logistic regression | 0.148, 0.127, 0.136, 0.321, 0.161 | 0.178 | 0.072 | 0.127 | 0.321 |
-| hist gradient boosting | 0.113, 0.133, 0.125, 0.372, 0.177 | 0.184 | 0.096 | 0.113 | 0.372 |
+| logistic regression | 0.150, 0.127, 0.135, 0.323, 0.162 | 0.179 | 0.073 | 2.11%, 1.80%, 1.13%, 2.30%, 1.86% | 7.11x, 7.03x, 11.92x, 14.02x, 8.70x |
+| hist gradient boosting | 0.113, 0.133, 0.125, 0.372, 0.177 | 0.184 | 0.096 | (same) | 5.35x, 7.39x, 11.06x, 16.15x, 9.53x |
 
-HGB's mean (0.184) doesn't clear LR's mean+1std (0.178+0.072=0.250), so
-**logistic regression is selected** (per the "keep the linear one if within
-noise, because it's inspectable" rule). Fold 3 is a clear outlier for both
-models (0.321 / 0.372 vs the other folds' 0.11-0.18) - whichever speakers
-landed in that validation fold happen to be unusually well-predicted;
-worth a closer look before trusting the mean too literally, but not
-investigated further in this pass.
+Per-fold scaling barely moved the numbers (0.179 vs the pooled-scaler run's
+0.178) - re-run confirms **logistic regression is still selected** (HGB's
+mean doesn't clear LR's mean+1std), not carried forward from the earlier
+run. Fold 3 is still the top fold by both raw PR-AUC and lift (14.02x,
+still highest even after controlling for its base rate), so it isn't a
+pure base-rate artifact - genuinely easier fold, not investigated further
+this pass. Fold 2 has the lowest prevalence (1.13%) but a respectable lift
+(11.92x), confirming lift and raw PR-AUC can diverge and lift is the
+better cross-fold comparison.
 
-**Beat-baseline test**, dev-speaker subset of logistic regression's
-out-of-fold predictions (never trained on these speakers) vs GOP z-score on
-the identical dev child population (3108 rows both):
+**Beat-baseline test - corrected to use ALL 125 pooled speakers, not just
+the 24 dev speakers** (see the per-speaker diagnostic below for why the
+dev-only number was misleading): logistic regression's out-of-fold
+predictions (every speaker predicted by a fold that never trained on them)
+vs GOP z-score, both restricted to the full pooled child population
+(16,422 rows both, prevalence 1.78%):
 
-**delta PR-AUC = +0.2389, 95% CI [+0.0478, +0.3900], P(delta>0)=99.8%.
-Lower bound > 0: Phase 3's classifier beats the GOP z-score baseline on the
-child slice**, per the corrected criterion above.
+**delta PR-AUC = +0.1363, 95% CI [+0.0687, +0.2239], P(delta>0)=100.0%.**
+In lift units: candidate 10.00x, baseline 2.36x, **delta_lift = +7.64x**.
+Lower bound > 0 by a wide margin - **this is the headline result.**
 
-Caveat disclosed, not hidden: the categorical one-hot encoder (phone
-identity, position, llr_best_origin, top_competitor) was fit on the full
-pooled dataset before the CV split, not per-fold. These are closed,
-linguistically-fixed vocabularies (39 ARPABET phones, 4 positions, ~12
-process names) rather than anything derived from labels or fold-specific
-statistics, so this isn't leakage in the sense that matters for the
-result - but it's a deviation from strict per-fold preprocessing worth
-naming rather than leaving implicit.
+**Per-speaker robustness** (`eval/train_phase3.py`'s per_speaker_delta,
+joined by exact phoneme-attempt key so both scorers are compared on
+identical populations per speaker): logistic regression beats GOP z-score
+on **98 of 107 speakers** with a defined per-speaker PR-AUC (18 excluded -
+single class among their own tokens), sign test p=4.9e-20, Wilcoxon
+p=1.6e-15. Restricted to the 49 child speakers with a defined PR-AUC:
+**44 of 49**, sign test p=7.6e-09, Wilcoxon p=7.2e-08. This is the number
+that survives composition effects - a pooled point estimate is hostage to
+a few error-dense speakers (exactly what happened to the dev-only number
+below); "beats on 44 of 49 child speakers" does not depend on which
+speakers happen to carry the most positive tokens.
+
+**Secondary, dev-only (24 speakers, kept for comparison, NOT the
+headline):** delta PR-AUC = +0.2401, 95% CI [+0.0458, +0.3913] (delta_lift
++8.11x). Diagnosed and explained, not just noted: dev speakers are spread
+across all 5 folds (0:4, 1:1, 2:6, 3:4, 4:9 - not concentrated in fold 3),
+but fold 3's dev-speaker subset specifically (n=529, 39 positives) scores
+PR-AUC=0.617 against fold 3's subtrain subset's 0.153 - a handful of dev
+speakers happen to be unusually easy, and that composition effect (not
+simple fold-selection) is what inflated the dev-only delta relative to the
+125-speaker headline. The dev-only number is real but should never be
+quoted as the headline on its own.
+
+**Numeric preprocessing audit (explicit, per review request):**
+
+- **Scaler**: `StandardScaler` is fit fresh on each fold's TRAINING rows
+  only (`eval/train_phase3.py`'s `run_cv`) and applied to that fold's
+  validation rows with the fold's own fitted scaler - never fit on the
+  pooled set. Applies to logistic regression only; HGB uses raw numeric
+  values (tree splits are invariant to monotonic per-feature scaling, so
+  scaling would be a no-op). The FINAL model used only for coefficient
+  inspection (not for any performance claim) is fit with a scaler on the
+  full pooled set - legitimate for that purpose since it's never scored
+  out-of-sample.
+- **Imputer**: none in the statistical sense. `llr_deletion` /
+  `llr_second_best` are undefined for some positions by construction (a
+  single-phoneme word has no deletion candidate; a phone with only one
+  documented substitution rule has no second-best). Missing values are
+  filled with a fixed constant (`MISSING_SENTINEL = -5.0`, chosen because
+  it's far below the observed LLR range and does not depend on any data
+  statistic, pooled or per-fold), plus an explicit `has_deletion_candidate`
+  / `has_second_best_candidate` binary flag so the model can distinguish
+  "no such candidate" from "candidate present with an unusually low LLR."
+  Nothing here could leak across the train/validation boundary because
+  nothing here is fit on data at all.
+- **Feature selection**: none.
+- **Speaker-relative features** (`*_speaker_rel`): computed upstream in
+  `eval/build_phase2_features.py`, which processes each speaker's own
+  attempts in (utt_id, word_index) order and centers each attempt on that
+  speaker's running mean computed from ONLY their own prior attempts
+  (Welford accumulator) - never another speaker's data, never a future
+  attempt of the same speaker's. Verified by construction (the accumulator
+  is keyed and updated per speaker, sequentially) rather than by a
+  separate check in this pass.
+- **Categorical one-hot encoding** (phone identity, position,
+  llr_best_origin, top_competitor): fit on the full pooled set, not per
+  fold. Not revisited further - these are closed, linguistically-fixed
+  vocabularies (39 ARPABET phones, 4 positions, ~12 process names), not
+  label-derived or fold-specific statistics, so this doesn't affect the
+  result in the way a pooled scaler or imputer would.
 
 ## Precision ceiling (see RESULTS.md for the full derivation)
 

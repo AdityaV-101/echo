@@ -1,0 +1,1921 @@
+{
+ "cv": {
+  "logistic_regression": {
+   "fold_stats": [
+    {
+     "fold": 0,
+     "n_val": 8077,
+     "n_child": 2466,
+     "n_child_pos": 52,
+     "prevalence": 0.021086780210867802,
+     "pr_auc": 0.14990507449740456,
+     "lift": 7.108959879049993
+    },
+    {
+     "fold": 1,
+     "n_val": 8087,
+     "n_child": 2719,
+     "n_child_pos": 49,
+     "prevalence": 0.01802133137182788,
+     "pr_auc": 0.12672785404430206,
+     "lift": 7.032102758090965
+    },
+    {
+     "fold": 2,
+     "n_val": 8090,
+     "n_child": 4409,
+     "n_child_pos": 50,
+     "prevalence": 0.011340440009072352,
+     "pr_auc": 0.13517522623677355,
+     "lift": 11.919751449558692
+    },
+    {
+     "fold": 3,
+     "n_val": 8085,
+     "n_child": 3388,
+     "n_child_pos": 78,
+     "prevalence": 0.023022432113341203,
+     "pr_auc": 0.32287666854503944,
+     "lift": 14.024437859366586
+    },
+    {
+     "fold": 4,
+     "n_val": 8087,
+     "n_child": 3440,
+     "n_child_pos": 64,
+     "prevalence": 0.018604651162790697,
+     "pr_auc": 0.1618760446069444,
+     "lift": 8.700837397623262
+    }
+   ]
+  },
+  "hist_gradient_boosting": {
+   "fold_stats": [
+    {
+     "fold": 0,
+     "n_val": 8077,
+     "n_child": 2466,
+     "n_child_pos": 52,
+     "prevalence": 0.021086780210867802,
+     "pr_auc": 0.11273163619490406,
+     "lift": 5.346081054935258
+    },
+    {
+     "fold": 1,
+     "n_val": 8087,
+     "n_child": 2719,
+     "n_child_pos": 49,
+     "prevalence": 0.01802133137182788,
+     "pr_auc": 0.13311485293552325,
+     "lift": 7.386516023095667
+    },
+    {
+     "fold": 2,
+     "n_val": 8090,
+     "n_child": 4409,
+     "n_child_pos": 50,
+     "prevalence": 0.011340440009072352,
+     "pr_auc": 0.1254039975571556,
+     "lift": 11.05812450458998
+    },
+    {
+     "fold": 3,
+     "n_val": 8085,
+     "n_child": 3388,
+     "n_child_pos": 78,
+     "prevalence": 0.023022432113341203,
+     "pr_auc": 0.37182786482329216,
+     "lift": 16.150677000273255
+    },
+    {
+     "fold": 4,
+     "n_val": 8087,
+     "n_child": 3440,
+     "n_child_pos": 64,
+     "prevalence": 0.018604651162790697,
+     "pr_auc": 0.17735366000194808,
+     "lift": 9.532759225104709
+    }
+   ]
+  }
+ },
+ "dev_speaker_fold_distribution": {
+  "0": 4,
+  "1": 1,
+  "2": 6,
+  "3": 4,
+  "4": 9
+ },
+ "selected_model": "logistic_regression",
+ "headline_beat_baseline_125_speakers": {
+  "point_delta": 0.13628307351226499,
+  "ci": [
+   0.06874947029244388,
+   0.22392911883764943
+  ],
+  "frac_positive": 1.0,
+  "n_candidate": 16422,
+  "n_baseline": 16422,
+  "prevalence": 0.01784191937644623,
+  "delta_lift": 7.638363935899029,
+  "candidate_pr_auc": 0.17835915703213875,
+  "baseline_pr_auc": 0.04207608351987376
+ },
+ "per_speaker_robustness_all_125": {
+  "n_speakers_included": 107,
+  "n_speakers_excluded_single_class": 18,
+  "n_beats": 98,
+  "n_loses": 9,
+  "n_ties": 0,
+  "sign_test_p_value": 4.8556740181387856e-20,
+  "wilcoxon_p_value": 1.6411364833047895e-15,
+  "mean_delta": 0.13370085467953494,
+  "median_delta": 0.11307492665127161,
+  "per_speaker": [
+   {
+    "speaker": "2430",
+    "n": 384,
+    "n_pos": 6,
+    "candidate_pr_auc": 0.058400719242110904,
+    "baseline_pr_auc": 0.03643946516819743,
+    "delta": 0.021961254073913472
+   },
+   {
+    "speaker": "5195",
+    "n": 339,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.41033283656234476,
+    "baseline_pr_auc": 0.44696969696969696,
+    "delta": -0.0366368604073522
+   },
+   {
+    "speaker": "0054",
+    "n": 247,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.4101654846335697,
+    "baseline_pr_auc": 0.02986082018340083,
+    "delta": 0.3803046644501689
+   },
+   {
+    "speaker": "9625",
+    "n": 331,
+    "n_pos": 97,
+    "candidate_pr_auc": 0.7061744600236063,
+    "baseline_pr_auc": 0.5366012803568281,
+    "delta": 0.1695731796667782
+   },
+   {
+    "speaker": "5424",
+    "n": 299,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.012658227848101266,
+    "baseline_pr_auc": 0.009708737864077669,
+    "delta": 0.0029494899840235966
+   },
+   {
+    "speaker": "1407",
+    "n": 386,
+    "n_pos": 12,
+    "candidate_pr_auc": 0.31449856509744284,
+    "baseline_pr_auc": 0.05440634855290424,
+    "delta": 0.2600922165445386
+   },
+   {
+    "speaker": "9607",
+    "n": 395,
+    "n_pos": 73,
+    "candidate_pr_auc": 0.7440982804287031,
+    "baseline_pr_auc": 0.43963339057061956,
+    "delta": 0.3044648898580835
+   },
+   {
+    "speaker": "7001",
+    "n": 377,
+    "n_pos": 57,
+    "candidate_pr_auc": 0.55848257568252,
+    "baseline_pr_auc": 0.24238035898101773,
+    "delta": 0.3161022167015023
+   },
+   {
+    "speaker": "0005",
+    "n": 206,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.459031198780475,
+    "baseline_pr_auc": 0.11158679810654382,
+    "delta": 0.3474444006739312
+   },
+   {
+    "speaker": "1362",
+    "n": 321,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.010850694444444444,
+    "baseline_pr_auc": 0.011379754996776273,
+    "delta": -0.0005290605523318292
+   },
+   {
+    "speaker": "6912",
+    "n": 323,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.2541090203443826,
+    "baseline_pr_auc": 0.04907002618443386,
+    "delta": 0.20503899415994875
+   },
+   {
+    "speaker": "5218",
+    "n": 336,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.12681159420289856,
+    "baseline_pr_auc": 0.02073365231259968,
+    "delta": 0.10607794189029887
+   },
+   {
+    "speaker": "1336",
+    "n": 314,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.2368548290250502,
+    "baseline_pr_auc": 0.043374854882294575,
+    "delta": 0.19347997414275564
+   },
+   {
+    "speaker": "1033",
+    "n": 431,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.03662733529990167,
+    "baseline_pr_auc": 0.08673469387755102,
+    "delta": -0.05010735857764935
+   },
+   {
+    "speaker": "2244",
+    "n": 388,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.06837606837606837,
+    "baseline_pr_auc": 0.017543859649122806,
+    "delta": 0.05083220872694556
+   },
+   {
+    "speaker": "9643",
+    "n": 304,
+    "n_pos": 179,
+    "candidate_pr_auc": 0.86890654513059,
+    "baseline_pr_auc": 0.7450181989393343,
+    "delta": 0.12388834619125566
+   },
+   {
+    "speaker": "2402",
+    "n": 417,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.1146624833118615,
+    "baseline_pr_auc": 0.019539595310920175,
+    "delta": 0.09512288800094133
+   },
+   {
+    "speaker": "0960",
+    "n": 363,
+    "n_pos": 17,
+    "candidate_pr_auc": 0.40285858675698316,
+    "baseline_pr_auc": 0.14713170552950477,
+    "delta": 0.2557268812274784
+   },
+   {
+    "speaker": "9604",
+    "n": 339,
+    "n_pos": 189,
+    "candidate_pr_auc": 0.9235335355376966,
+    "baseline_pr_auc": 0.6822333304211536,
+    "delta": 0.24130020511654293
+   },
+   {
+    "speaker": "1064",
+    "n": 351,
+    "n_pos": 10,
+    "candidate_pr_auc": 0.26037877090425815,
+    "baseline_pr_auc": 0.06034025852937634,
+    "delta": 0.2000385123748818
+   },
+   {
+    "speaker": "8002",
+    "n": 327,
+    "n_pos": 79,
+    "candidate_pr_auc": 0.506138683437454,
+    "baseline_pr_auc": 0.38373454756710534,
+    "delta": 0.12240413587034871
+   },
+   {
+    "speaker": "1029",
+    "n": 386,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.02702702702702703,
+    "baseline_pr_auc": 0.009174311926605505,
+    "delta": 0.017852715100421523
+   },
+   {
+    "speaker": "1092",
+    "n": 247,
+    "n_pos": 14,
+    "candidate_pr_auc": 0.25836246784263234,
+    "baseline_pr_auc": 0.14528754119136073,
+    "delta": 0.11307492665127161
+   },
+   {
+    "speaker": "3083",
+    "n": 268,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.027113611501797155,
+    "baseline_pr_auc": 0.012256686948736223,
+    "delta": 0.014856924553060933
+   },
+   {
+    "speaker": "0482",
+    "n": 397,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.08961451247165533,
+    "baseline_pr_auc": 0.02912829765688564,
+    "delta": 0.06048621481476969
+   },
+   {
+    "speaker": "1260",
+    "n": 338,
+    "n_pos": 6,
+    "candidate_pr_auc": 0.10157033382441955,
+    "baseline_pr_auc": 0.03530273045502482,
+    "delta": 0.06626760336939472
+   },
+   {
+    "speaker": "0131",
+    "n": 240,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.27077835208269996,
+    "baseline_pr_auc": 0.12248298098814454,
+    "delta": 0.14829537109455543
+   },
+   {
+    "speaker": "5414",
+    "n": 271,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.4348484848484848,
+    "baseline_pr_auc": 0.16220461495690852,
+    "delta": 0.2726438698915763
+   },
+   {
+    "speaker": "0739",
+    "n": 354,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.3456244611137915,
+    "baseline_pr_auc": 0.08001035751789323,
+    "delta": 0.2656141035958983
+   },
+   {
+    "speaker": "8057",
+    "n": 383,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.040586504872219153,
+    "baseline_pr_auc": 0.009596874186469309,
+    "delta": 0.030989630685749843
+   },
+   {
+    "speaker": "6010",
+    "n": 323,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.034482758620689655,
+    "baseline_pr_auc": 0.02,
+    "delta": 0.014482758620689654
+   },
+   {
+    "speaker": "2061",
+    "n": 346,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.028454524299674613,
+    "baseline_pr_auc": 0.009737505768509706,
+    "delta": 0.018717018531164906
+   },
+   {
+    "speaker": "9619",
+    "n": 334,
+    "n_pos": 71,
+    "candidate_pr_auc": 0.6638057992825818,
+    "baseline_pr_auc": 0.393920509442392,
+    "delta": 0.2698852898401898
+   },
+   {
+    "speaker": "0575",
+    "n": 380,
+    "n_pos": 7,
+    "candidate_pr_auc": 0.33704992613310547,
+    "baseline_pr_auc": 0.1646423245635321,
+    "delta": 0.17240760156957338
+   },
+   {
+    "speaker": "0056",
+    "n": 226,
+    "n_pos": 7,
+    "candidate_pr_auc": 0.2489162389755344,
+    "baseline_pr_auc": 0.05178888110493911,
+    "delta": 0.19712735787059527
+   },
+   {
+    "speaker": "2236",
+    "n": 338,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.16691729323308271,
+    "baseline_pr_auc": 0.026099027618784458,
+    "delta": 0.14081826561429825
+   },
+   {
+    "speaker": "0048",
+    "n": 197,
+    "n_pos": 25,
+    "candidate_pr_auc": 0.41689046984486733,
+    "baseline_pr_auc": 0.25185267330583905,
+    "delta": 0.16503779653902828
+   },
+   {
+    "speaker": "8585",
+    "n": 332,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.23871838928986566,
+    "baseline_pr_auc": 0.15886347964133735,
+    "delta": 0.07985490964852832
+   },
+   {
+    "speaker": "0001",
+    "n": 221,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.14312039007691182,
+    "baseline_pr_auc": 0.08181923372485986,
+    "delta": 0.061301156352051966
+   },
+   {
+    "speaker": "2282",
+    "n": 372,
+    "n_pos": 7,
+    "candidate_pr_auc": 0.05483075986510062,
+    "baseline_pr_auc": 0.0900578613491487,
+    "delta": -0.035227101484048076
+   },
+   {
+    "speaker": "6048",
+    "n": 324,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.058823529411764705,
+    "baseline_pr_auc": 0.012048192771084338,
+    "delta": 0.04677533664068037
+   },
+   {
+    "speaker": "5551",
+    "n": 304,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.08592085235920852,
+    "baseline_pr_auc": 0.022709209911173443,
+    "delta": 0.06321164244803507
+   },
+   {
+    "speaker": "0103",
+    "n": 249,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.07628968253968253,
+    "baseline_pr_auc": 0.5231536628945801,
+    "delta": -0.44686398035489755
+   },
+   {
+    "speaker": "9600",
+    "n": 404,
+    "n_pos": 79,
+    "candidate_pr_auc": 0.6385765605207215,
+    "baseline_pr_auc": 0.4219516465467855,
+    "delta": 0.21662491397393602
+   },
+   {
+    "speaker": "9611",
+    "n": 363,
+    "n_pos": 110,
+    "candidate_pr_auc": 0.775142332451309,
+    "baseline_pr_auc": 0.4910101706696627,
+    "delta": 0.28413216178164635
+   },
+   {
+    "speaker": "5401",
+    "n": 275,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.03485576923076923,
+    "baseline_pr_auc": 0.010785351987068726,
+    "delta": 0.024070417243700508
+   },
+   {
+    "speaker": "3068",
+    "n": 242,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.04213162229661512,
+    "baseline_pr_auc": 0.014424546971575936,
+    "delta": 0.027707075325039188
+   },
+   {
+    "speaker": "0560",
+    "n": 308,
+    "n_pos": 8,
+    "candidate_pr_auc": 0.3560706276338846,
+    "baseline_pr_auc": 0.18974756264970866,
+    "delta": 0.16632306498417593
+   },
+   {
+    "speaker": "9645",
+    "n": 369,
+    "n_pos": 126,
+    "candidate_pr_auc": 0.7165073573913614,
+    "baseline_pr_auc": 0.5428476766623669,
+    "delta": 0.17365968072899451
+   },
+   {
+    "speaker": "1203",
+    "n": 262,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.28282909578684223,
+    "baseline_pr_auc": 0.05780529121665644,
+    "delta": 0.22502380457018578
+   },
+   {
+    "speaker": "6401",
+    "n": 297,
+    "n_pos": 8,
+    "candidate_pr_auc": 0.2527760796024553,
+    "baseline_pr_auc": 0.08343600418993992,
+    "delta": 0.1693400754125154
+   },
+   {
+    "speaker": "1197",
+    "n": 271,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.11890334978530519,
+    "baseline_pr_auc": 0.14039530280537477,
+    "delta": -0.02149195302006958
+   },
+   {
+    "speaker": "0594",
+    "n": 340,
+    "n_pos": 14,
+    "candidate_pr_auc": 0.28194703657318015,
+    "baseline_pr_auc": 0.10150369404978016,
+    "delta": 0.1804433425234
+   },
+   {
+    "speaker": "9609",
+    "n": 351,
+    "n_pos": 202,
+    "candidate_pr_auc": 0.9164375925775503,
+    "baseline_pr_auc": 0.7292360398915152,
+    "delta": 0.1872015526860351
+   },
+   {
+    "speaker": "2380",
+    "n": 416,
+    "n_pos": 7,
+    "candidate_pr_auc": 0.21501733057496486,
+    "baseline_pr_auc": 0.10892997514486351,
+    "delta": 0.10608735543010135
+   },
+   {
+    "speaker": "9616",
+    "n": 357,
+    "n_pos": 80,
+    "candidate_pr_auc": 0.8593890519900533,
+    "baseline_pr_auc": 0.36835283830218,
+    "delta": 0.4910362136878733
+   },
+   {
+    "speaker": "9613",
+    "n": 311,
+    "n_pos": 111,
+    "candidate_pr_auc": 0.817671515147799,
+    "baseline_pr_auc": 0.5271473525938657,
+    "delta": 0.2905241625539333
+   },
+   {
+    "speaker": "9606",
+    "n": 341,
+    "n_pos": 95,
+    "candidate_pr_auc": 0.728884575001233,
+    "baseline_pr_auc": 0.39338520563406226,
+    "delta": 0.3354993693671708
+   },
+   {
+    "speaker": "2427",
+    "n": 355,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.008849557522123894,
+    "baseline_pr_auc": 0.002824858757062147,
+    "delta": 0.006024698765061747
+   },
+   {
+    "speaker": "9634",
+    "n": 301,
+    "n_pos": 112,
+    "candidate_pr_auc": 0.7030581965605822,
+    "baseline_pr_auc": 0.6472954010220072,
+    "delta": 0.055762795538574994
+   },
+   {
+    "speaker": "3423",
+    "n": 254,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.048378076062639816,
+    "baseline_pr_auc": 0.04079254079254079,
+    "delta": 0.007585535270099024
+   },
+   {
+    "speaker": "1419",
+    "n": 255,
+    "n_pos": 11,
+    "candidate_pr_auc": 0.5620190014787473,
+    "baseline_pr_auc": 0.1713387087400597,
+    "delta": 0.3906802927386876
+   },
+   {
+    "speaker": "0135",
+    "n": 368,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.012345679012345678,
+    "baseline_pr_auc": 0.010101010101010102,
+    "delta": 0.0022446689113355765
+   },
+   {
+    "speaker": "0036",
+    "n": 378,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.5352328431372548,
+    "baseline_pr_auc": 0.2857669132344144,
+    "delta": 0.24946592990284044
+   },
+   {
+    "speaker": "2621",
+    "n": 337,
+    "n_pos": 6,
+    "candidate_pr_auc": 0.1255944665751859,
+    "baseline_pr_auc": 0.05327732346844167,
+    "delta": 0.07231714310674422
+   },
+   {
+    "speaker": "0104",
+    "n": 270,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.09433760683760684,
+    "baseline_pr_auc": 0.02847737661514788,
+    "delta": 0.06586023022245896
+   },
+   {
+    "speaker": "9556",
+    "n": 365,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.07602834612105712,
+    "baseline_pr_auc": 0.277595574107202,
+    "delta": -0.20156722798614485
+   },
+   {
+    "speaker": "9614",
+    "n": 390,
+    "n_pos": 50,
+    "candidate_pr_auc": 0.5834103024274572,
+    "baseline_pr_auc": 0.18255590434059854,
+    "delta": 0.40085439808685863
+   },
+   {
+    "speaker": "1439",
+    "n": 307,
+    "n_pos": 11,
+    "candidate_pr_auc": 0.2460953871925983,
+    "baseline_pr_auc": 0.05157791922494133,
+    "delta": 0.19451746796765695
+   },
+   {
+    "speaker": "2799",
+    "n": 376,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.01282051282051282,
+    "baseline_pr_auc": 0.003257328990228013,
+    "delta": 0.009563183830284807
+   },
+   {
+    "speaker": "1418",
+    "n": 253,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.03826530612244898,
+    "baseline_pr_auc": 0.02478580171358629,
+    "delta": 0.01347950440886269
+   },
+   {
+    "speaker": "2089",
+    "n": 348,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.036155202821869487,
+    "baseline_pr_auc": 0.050405040504050404,
+    "delta": -0.014249837682180917
+   },
+   {
+    "speaker": "2450",
+    "n": 341,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.4785263516970834,
+    "baseline_pr_auc": 0.1114555149600079,
+    "delta": 0.3670708367370755
+   },
+   {
+    "speaker": "3837",
+    "n": 238,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.2,
+    "baseline_pr_auc": 0.09090909090909091,
+    "delta": 0.1090909090909091
+   },
+   {
+    "speaker": "9034",
+    "n": 409,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.3398312392214831,
+    "baseline_pr_auc": 0.07407407407407407,
+    "delta": 0.26575716514740905
+   },
+   {
+    "speaker": "9630",
+    "n": 315,
+    "n_pos": 60,
+    "candidate_pr_auc": 0.4998731157515083,
+    "baseline_pr_auc": 0.4072421166713937,
+    "delta": 0.09263099908011457
+   },
+   {
+    "speaker": "2242",
+    "n": 348,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.020833333333333332,
+    "baseline_pr_auc": 0.014084507042253521,
+    "delta": 0.006748826291079811
+   },
+   {
+    "speaker": "9615",
+    "n": 410,
+    "n_pos": 34,
+    "candidate_pr_auc": 0.3180146002731932,
+    "baseline_pr_auc": 0.14684503063686766,
+    "delta": 0.17116956963632557
+   },
+   {
+    "speaker": "0070",
+    "n": 224,
+    "n_pos": 6,
+    "candidate_pr_auc": 0.12542776006425502,
+    "baseline_pr_auc": 0.06534881982349186,
+    "delta": 0.06007894024076316
+   },
+   {
+    "speaker": "1447",
+    "n": 259,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.3361173309449172,
+    "baseline_pr_auc": 0.1108858214955776,
+    "delta": 0.2252315094493396
+   },
+   {
+    "speaker": "2170",
+    "n": 395,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.05102292369685653,
+    "baseline_pr_auc": 0.04233012358956423,
+    "delta": 0.0086928001072923
+   },
+   {
+    "speaker": "1309",
+    "n": 357,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.04849055124284482,
+    "baseline_pr_auc": 0.015856872007455253,
+    "delta": 0.03263367923538957
+   },
+   {
+    "speaker": "7551",
+    "n": 406,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.6875,
+    "baseline_pr_auc": 0.05000874125874125,
+    "delta": 0.6374912587412588
+   },
+   {
+    "speaker": "9628",
+    "n": 293,
+    "n_pos": 49,
+    "candidate_pr_auc": 0.39713955094344555,
+    "baseline_pr_auc": 0.2241505556317528,
+    "delta": 0.17298899531169276
+   },
+   {
+    "speaker": "9646",
+    "n": 360,
+    "n_pos": 120,
+    "candidate_pr_auc": 0.7542667024891855,
+    "baseline_pr_auc": 0.6737218990802609,
+    "delta": 0.08054480340892456
+   },
+   {
+    "speaker": "1027",
+    "n": 397,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.06666666666666667,
+    "baseline_pr_auc": 0.038461538461538464,
+    "delta": 0.028205128205128202
+   },
+   {
+    "speaker": "0026",
+    "n": 259,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.16159655561829472,
+    "baseline_pr_auc": 0.06953249601275917,
+    "delta": 0.09206405960553556
+   },
+   {
+    "speaker": "3002",
+    "n": 218,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.11666666666666667,
+    "baseline_pr_auc": 0.013171845689584863,
+    "delta": 0.1034948209770818
+   },
+   {
+    "speaker": "2034",
+    "n": 299,
+    "n_pos": 10,
+    "candidate_pr_auc": 0.06819380621644384,
+    "baseline_pr_auc": 0.05957936778198727,
+    "delta": 0.008614438434456577
+   },
+   {
+    "speaker": "0075",
+    "n": 217,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.3074058924854259,
+    "baseline_pr_auc": 0.14622228300529996,
+    "delta": 0.16118360948012592
+   },
+   {
+    "speaker": "3049",
+    "n": 268,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.2365276287654275,
+    "baseline_pr_auc": 0.04726667818065356,
+    "delta": 0.18926095058477393
+   },
+   {
+    "speaker": "1044",
+    "n": 294,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.04735449735449735,
+    "baseline_pr_auc": 0.021619661549696533,
+    "delta": 0.025734835804800817
+   },
+   {
+    "speaker": "2179",
+    "n": 270,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.05525846702317291,
+    "baseline_pr_auc": 0.020101483216237316,
+    "delta": 0.03515698380693559
+   },
+   {
+    "speaker": "3088",
+    "n": 236,
+    "n_pos": 7,
+    "candidate_pr_auc": 0.25330349683733144,
+    "baseline_pr_auc": 0.12165100946961557,
+    "delta": 0.13165248736771587
+   },
+   {
+    "speaker": "3021",
+    "n": 257,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.13855820105820105,
+    "baseline_pr_auc": 0.029841152869892737,
+    "delta": 0.10871704818830831
+   },
+   {
+    "speaker": "9649",
+    "n": 331,
+    "n_pos": 126,
+    "candidate_pr_auc": 0.8080029021005823,
+    "baseline_pr_auc": 0.5341221686915956,
+    "delta": 0.2738807334089868
+   },
+   {
+    "speaker": "1372",
+    "n": 358,
+    "n_pos": 6,
+    "candidate_pr_auc": 0.26705246913580244,
+    "baseline_pr_auc": 0.09147380548878015,
+    "delta": 0.1755786636470223
+   },
+   {
+    "speaker": "2981",
+    "n": 335,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.019687304504539545,
+    "baseline_pr_auc": 0.013992231225088836,
+    "delta": 0.005695073279450709
+   },
+   {
+    "speaker": "9639",
+    "n": 279,
+    "n_pos": 48,
+    "candidate_pr_auc": 0.5058350987074763,
+    "baseline_pr_auc": 0.35662491674152313,
+    "delta": 0.1492101819659532
+   },
+   {
+    "speaker": "9624",
+    "n": 338,
+    "n_pos": 100,
+    "candidate_pr_auc": 0.7766653678989818,
+    "baseline_pr_auc": 0.4187316477799487,
+    "delta": 0.35793372011903307
+   },
+   {
+    "speaker": "0053",
+    "n": 242,
+    "n_pos": 13,
+    "candidate_pr_auc": 0.30072053814953004,
+    "baseline_pr_auc": 0.08436331798115335,
+    "delta": 0.2163572201683767
+   },
+   {
+    "speaker": "1435",
+    "n": 293,
+    "n_pos": 32,
+    "candidate_pr_auc": 0.7067811607690532,
+    "baseline_pr_auc": 0.254562863466295,
+    "delta": 0.4522182973027582
+   },
+   {
+    "speaker": "3046",
+    "n": 275,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.07392854711328976,
+    "baseline_pr_auc": 0.040744220946401774,
+    "delta": 0.03318432616688799
+   },
+   {
+    "speaker": "1042",
+    "n": 246,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.01893824248682918,
+    "baseline_pr_auc": 0.04681598594642073,
+    "delta": -0.027877743459591552
+   },
+   {
+    "speaker": "4005",
+    "n": 325,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.02631578947368421,
+    "baseline_pr_auc": 0.009345794392523364,
+    "delta": 0.016969995081160844
+   },
+   {
+    "speaker": "0145",
+    "n": 223,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.3424023691266467,
+    "baseline_pr_auc": 0.18682092427032804,
+    "delta": 0.15558144485631864
+   },
+   {
+    "speaker": "2022",
+    "n": 351,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.2696140552995392,
+    "baseline_pr_auc": 0.04242772409746641,
+    "delta": 0.22718633120207277
+   }
+  ]
+ },
+ "per_speaker_robustness_child_only": {
+  "n_speakers_included": 49,
+  "n_speakers_excluded_single_class": 9,
+  "n_beats": 44,
+  "n_loses": 5,
+  "n_ties": 0,
+  "sign_test_p_value": 7.59715845788378e-09,
+  "wilcoxon_p_value": 7.168972970816867e-08,
+  "mean_delta": 0.11518702276528775,
+  "median_delta": 0.1034948209770818,
+  "per_speaker": [
+   {
+    "speaker": "5195",
+    "n": 339,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.41033283656234476,
+    "baseline_pr_auc": 0.44696969696969696,
+    "delta": -0.0366368604073522
+   },
+   {
+    "speaker": "0054",
+    "n": 247,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.4101654846335697,
+    "baseline_pr_auc": 0.02986082018340083,
+    "delta": 0.3803046644501689
+   },
+   {
+    "speaker": "0131",
+    "n": 240,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.27077835208269996,
+    "baseline_pr_auc": 0.12248298098814454,
+    "delta": 0.14829537109455543
+   },
+   {
+    "speaker": "5424",
+    "n": 299,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.012658227848101266,
+    "baseline_pr_auc": 0.009708737864077669,
+    "delta": 0.0029494899840235966
+   },
+   {
+    "speaker": "8057",
+    "n": 383,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.040586504872219153,
+    "baseline_pr_auc": 0.009596874186469309,
+    "delta": 0.030989630685749843
+   },
+   {
+    "speaker": "9556",
+    "n": 365,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.07602834612105712,
+    "baseline_pr_auc": 0.277595574107202,
+    "delta": -0.20156722798614485
+   },
+   {
+    "speaker": "3083",
+    "n": 268,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.027113611501797155,
+    "baseline_pr_auc": 0.012256686948736223,
+    "delta": 0.014856924553060933
+   },
+   {
+    "speaker": "5401",
+    "n": 275,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.03485576923076923,
+    "baseline_pr_auc": 0.010785351987068726,
+    "delta": 0.024070417243700508
+   },
+   {
+    "speaker": "1203",
+    "n": 262,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.28282909578684223,
+    "baseline_pr_auc": 0.05780529121665644,
+    "delta": 0.22502380457018578
+   },
+   {
+    "speaker": "0005",
+    "n": 206,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.459031198780475,
+    "baseline_pr_auc": 0.11158679810654382,
+    "delta": 0.3474444006739312
+   },
+   {
+    "speaker": "3002",
+    "n": 218,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.11666666666666667,
+    "baseline_pr_auc": 0.013171845689584863,
+    "delta": 0.1034948209770818
+   },
+   {
+    "speaker": "6912",
+    "n": 323,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.2541090203443826,
+    "baseline_pr_auc": 0.04907002618443386,
+    "delta": 0.20503899415994875
+   },
+   {
+    "speaker": "1044",
+    "n": 294,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.04735449735449735,
+    "baseline_pr_auc": 0.021619661549696533,
+    "delta": 0.025734835804800817
+   },
+   {
+    "speaker": "5218",
+    "n": 336,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.12681159420289856,
+    "baseline_pr_auc": 0.02073365231259968,
+    "delta": 0.10607794189029887
+   },
+   {
+    "speaker": "8585",
+    "n": 332,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.23871838928986566,
+    "baseline_pr_auc": 0.15886347964133735,
+    "delta": 0.07985490964852832
+   },
+   {
+    "speaker": "2034",
+    "n": 299,
+    "n_pos": 10,
+    "candidate_pr_auc": 0.06819380621644384,
+    "baseline_pr_auc": 0.05957936778198727,
+    "delta": 0.008614438434456577
+   },
+   {
+    "speaker": "7551",
+    "n": 406,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.6875,
+    "baseline_pr_auc": 0.05000874125874125,
+    "delta": 0.6374912587412588
+   },
+   {
+    "speaker": "1419",
+    "n": 255,
+    "n_pos": 11,
+    "candidate_pr_auc": 0.5620190014787473,
+    "baseline_pr_auc": 0.1713387087400597,
+    "delta": 0.3906802927386876
+   },
+   {
+    "speaker": "1435",
+    "n": 293,
+    "n_pos": 32,
+    "candidate_pr_auc": 0.7067811607690532,
+    "baseline_pr_auc": 0.254562863466295,
+    "delta": 0.4522182973027582
+   },
+   {
+    "speaker": "1447",
+    "n": 259,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.3361173309449172,
+    "baseline_pr_auc": 0.1108858214955776,
+    "delta": 0.2252315094493396
+   },
+   {
+    "speaker": "5551",
+    "n": 304,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.08592085235920852,
+    "baseline_pr_auc": 0.022709209911173443,
+    "delta": 0.06321164244803507
+   },
+   {
+    "speaker": "1439",
+    "n": 307,
+    "n_pos": 11,
+    "candidate_pr_auc": 0.2460953871925983,
+    "baseline_pr_auc": 0.05157791922494133,
+    "delta": 0.19451746796765695
+   },
+   {
+    "speaker": "9034",
+    "n": 409,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.3398312392214831,
+    "baseline_pr_auc": 0.07407407407407407,
+    "delta": 0.26575716514740905
+   },
+   {
+    "speaker": "1418",
+    "n": 253,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.03826530612244898,
+    "baseline_pr_auc": 0.02478580171358629,
+    "delta": 0.01347950440886269
+   },
+   {
+    "speaker": "0001",
+    "n": 221,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.14312039007691182,
+    "baseline_pr_auc": 0.08181923372485986,
+    "delta": 0.061301156352051966
+   },
+   {
+    "speaker": "0104",
+    "n": 270,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.09433760683760684,
+    "baseline_pr_auc": 0.02847737661514788,
+    "delta": 0.06586023022245896
+   },
+   {
+    "speaker": "0048",
+    "n": 197,
+    "n_pos": 25,
+    "candidate_pr_auc": 0.41689046984486733,
+    "baseline_pr_auc": 0.25185267330583905,
+    "delta": 0.16503779653902828
+   },
+   {
+    "speaker": "1042",
+    "n": 246,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.01893824248682918,
+    "baseline_pr_auc": 0.04681598594642073,
+    "delta": -0.027877743459591552
+   },
+   {
+    "speaker": "6010",
+    "n": 323,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.034482758620689655,
+    "baseline_pr_auc": 0.02,
+    "delta": 0.014482758620689654
+   },
+   {
+    "speaker": "1092",
+    "n": 247,
+    "n_pos": 14,
+    "candidate_pr_auc": 0.25836246784263234,
+    "baseline_pr_auc": 0.14528754119136073,
+    "delta": 0.11307492665127161
+   },
+   {
+    "speaker": "0103",
+    "n": 249,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.07628968253968253,
+    "baseline_pr_auc": 0.5231536628945801,
+    "delta": -0.44686398035489755
+   },
+   {
+    "speaker": "5414",
+    "n": 271,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.4348484848484848,
+    "baseline_pr_auc": 0.16220461495690852,
+    "delta": 0.2726438698915763
+   },
+   {
+    "speaker": "3837",
+    "n": 238,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.2,
+    "baseline_pr_auc": 0.09090909090909091,
+    "delta": 0.1090909090909091
+   },
+   {
+    "speaker": "2179",
+    "n": 270,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.05525846702317291,
+    "baseline_pr_auc": 0.020101483216237316,
+    "delta": 0.03515698380693559
+   },
+   {
+    "speaker": "3046",
+    "n": 275,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.07392854711328976,
+    "baseline_pr_auc": 0.040744220946401774,
+    "delta": 0.03318432616688799
+   },
+   {
+    "speaker": "0056",
+    "n": 226,
+    "n_pos": 7,
+    "candidate_pr_auc": 0.2489162389755344,
+    "baseline_pr_auc": 0.05178888110493911,
+    "delta": 0.19712735787059527
+   },
+   {
+    "speaker": "0075",
+    "n": 217,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.3074058924854259,
+    "baseline_pr_auc": 0.14622228300529996,
+    "delta": 0.16118360948012592
+   },
+   {
+    "speaker": "3088",
+    "n": 236,
+    "n_pos": 7,
+    "candidate_pr_auc": 0.25330349683733144,
+    "baseline_pr_auc": 0.12165100946961557,
+    "delta": 0.13165248736771587
+   },
+   {
+    "speaker": "6048",
+    "n": 324,
+    "n_pos": 1,
+    "candidate_pr_auc": 0.058823529411764705,
+    "baseline_pr_auc": 0.012048192771084338,
+    "delta": 0.04677533664068037
+   },
+   {
+    "speaker": "0070",
+    "n": 224,
+    "n_pos": 6,
+    "candidate_pr_auc": 0.12542776006425502,
+    "baseline_pr_auc": 0.06534881982349186,
+    "delta": 0.06007894024076316
+   },
+   {
+    "speaker": "0053",
+    "n": 242,
+    "n_pos": 13,
+    "candidate_pr_auc": 0.30072053814953004,
+    "baseline_pr_auc": 0.08436331798115335,
+    "delta": 0.2163572201683767
+   },
+   {
+    "speaker": "3423",
+    "n": 254,
+    "n_pos": 2,
+    "candidate_pr_auc": 0.048378076062639816,
+    "baseline_pr_auc": 0.04079254079254079,
+    "delta": 0.007585535270099024
+   },
+   {
+    "speaker": "3068",
+    "n": 242,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.04213162229661512,
+    "baseline_pr_auc": 0.014424546971575936,
+    "delta": 0.027707075325039188
+   },
+   {
+    "speaker": "6401",
+    "n": 297,
+    "n_pos": 8,
+    "candidate_pr_auc": 0.2527760796024553,
+    "baseline_pr_auc": 0.08343600418993992,
+    "delta": 0.1693400754125154
+   },
+   {
+    "speaker": "1197",
+    "n": 271,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.11890334978530519,
+    "baseline_pr_auc": 0.14039530280537477,
+    "delta": -0.02149195302006958
+   },
+   {
+    "speaker": "3021",
+    "n": 257,
+    "n_pos": 3,
+    "candidate_pr_auc": 0.13855820105820105,
+    "baseline_pr_auc": 0.029841152869892737,
+    "delta": 0.10871704818830831
+   },
+   {
+    "speaker": "3049",
+    "n": 268,
+    "n_pos": 5,
+    "candidate_pr_auc": 0.2365276287654275,
+    "baseline_pr_auc": 0.04726667818065356,
+    "delta": 0.18926095058477393
+   },
+   {
+    "speaker": "0026",
+    "n": 259,
+    "n_pos": 4,
+    "candidate_pr_auc": 0.16159655561829472,
+    "baseline_pr_auc": 0.06953249601275917,
+    "delta": 0.09206405960553556
+   },
+   {
+    "speaker": "0145",
+    "n": 223,
+    "n_pos": 9,
+    "candidate_pr_auc": 0.3424023691266467,
+    "baseline_pr_auc": 0.18682092427032804,
+    "delta": 0.15558144485631864
+   }
+  ]
+ },
+ "secondary_beat_baseline_dev_only": {
+  "point_delta": 0.24014611366132282,
+  "ci": [
+   0.045819701348170816,
+   0.3912625020342087
+  ],
+  "frac_positive": 0.9975,
+  "n_candidate": 3108,
+  "n_baseline": 3108,
+  "prevalence": 0.029601029601029602,
+  "delta_lift": 8.11276218760208
+ },
+ "reliability_diagram": [
+  {
+   "bin_lo": 0.0,
+   "bin_hi": 0.1,
+   "count": 6572,
+   "mean_predicted": 0.04287754738486653,
+   "empirical_frequency": 0.0012172854534388314
+  },
+  {
+   "bin_lo": 0.1,
+   "bin_hi": 0.2,
+   "count": 2750,
+   "mean_predicted": 0.14593496612217058,
+   "empirical_frequency": 0.0061818181818181816
+  },
+  {
+   "bin_lo": 0.2,
+   "bin_hi": 0.30000000000000004,
+   "count": 1753,
+   "mean_predicted": 0.24712538513563906,
+   "empirical_frequency": 0.011409013120365089
+  },
+  {
+   "bin_lo": 0.30000000000000004,
+   "bin_hi": 0.4,
+   "count": 1305,
+   "mean_predicted": 0.34787145890728205,
+   "empirical_frequency": 0.017624521072796936
+  },
+  {
+   "bin_lo": 0.4,
+   "bin_hi": 0.5,
+   "count": 1070,
+   "mean_predicted": 0.4469684779875367,
+   "empirical_frequency": 0.02149532710280374
+  },
+  {
+   "bin_lo": 0.5,
+   "bin_hi": 0.6000000000000001,
+   "count": 882,
+   "mean_predicted": 0.5493734232514266,
+   "empirical_frequency": 0.022675736961451247
+  },
+  {
+   "bin_lo": 0.6000000000000001,
+   "bin_hi": 0.7000000000000001,
+   "count": 745,
+   "mean_predicted": 0.6515540019488627,
+   "empirical_frequency": 0.049664429530201344
+  },
+  {
+   "bin_lo": 0.7000000000000001,
+   "bin_hi": 0.8,
+   "count": 590,
+   "mean_predicted": 0.7477599625236026,
+   "empirical_frequency": 0.05423728813559322
+  },
+  {
+   "bin_lo": 0.8,
+   "bin_hi": 0.9,
+   "count": 499,
+   "mean_predicted": 0.8479729113144425,
+   "empirical_frequency": 0.09218436873747494
+  },
+  {
+   "bin_lo": 0.9,
+   "bin_hi": 1.0,
+   "count": 256,
+   "mean_predicted": 0.9423936920988834,
+   "empirical_frequency": 0.26171875
+  }
+ ],
+ "ece": 0.23328927416176848,
+ "lr_coefficients_standardized": [
+  {
+   "feature": "expected_ER",
+   "coef": -2.8651179421169712
+  },
+  {
+   "feature": "expected_N",
+   "coef": 2.4143958656669913
+  },
+  {
+   "feature": "expected_M",
+   "coef": 2.357065921680162
+  },
+  {
+   "feature": "gop_i",
+   "coef": -2.189139579191823
+  },
+  {
+   "feature": "llr_best_origin_vowelization",
+   "coef": -2.157398086849383
+  },
+  {
+   "feature": "expected_DH",
+   "coef": -1.9609883778525
+  },
+  {
+   "feature": "expected_W",
+   "coef": 1.9368764682304664
+  },
+  {
+   "feature": "llr_deletion",
+   "coef": 1.9330860244626311
+  },
+  {
+   "feature": "expected_S",
+   "coef": 1.6716629763378266
+  },
+  {
+   "feature": "llr_best",
+   "coef": -1.645466589226905
+  },
+  {
+   "feature": "expected_AO",
+   "coef": -1.457623339695457
+  },
+  {
+   "feature": "expected_UH",
+   "coef": -1.4449965262358562
+  },
+  {
+   "feature": "expected_P",
+   "coef": 1.4204641884156393
+  },
+  {
+   "feature": "gop_i_speaker_rel",
+   "coef": 1.3922854407250789
+  },
+  {
+   "feature": "frame_count_word",
+   "coef": 1.3789474950445098
+  },
+  {
+   "feature": "has_second_best_candidate",
+   "coef": 1.2834033028814316
+  },
+  {
+   "feature": "expected_AH",
+   "coef": -1.2830342592210795
+  },
+  {
+   "feature": "top_competitor_CH",
+   "coef": -1.251822667900138
+  },
+  {
+   "feature": "expected_HH",
+   "coef": -1.153798324255183
+  },
+  {
+   "feature": "has_deletion_candidate",
+   "coef": -1.1454420260452636
+  },
+  {
+   "feature": "expected_JH",
+   "coef": -1.1402017365026527
+  },
+  {
+   "feature": "expected_B",
+   "coef": 1.068487295141522
+  },
+  {
+   "feature": "expected_AE",
+   "coef": -1.0249855804861192
+  },
+  {
+   "feature": "top_competitor_IH",
+   "coef": 0.9826350006303692
+  },
+  {
+   "feature": "expected_EY",
+   "coef": 0.9466006082301818
+  },
+  {
+   "feature": "expected_IH",
+   "coef": -0.9338901782049324
+  },
+  {
+   "feature": "expected_R",
+   "coef": -0.9091907820307812
+  },
+  {
+   "feature": "expected_K",
+   "coef": 0.8967832228642442
+  },
+  {
+   "feature": "expected_Z",
+   "coef": 0.8637608970257221
+  },
+  {
+   "feature": "expected_OW",
+   "coef": -0.8403893707539686
+  },
+  {
+   "feature": "llr_best_origin_gliding",
+   "coef": 0.8304063082730415
+  },
+  {
+   "feature": "expected_V",
+   "coef": -0.8296540819752357
+  },
+  {
+   "feature": "top_competitor_NG",
+   "coef": -0.7942244846175284
+  },
+  {
+   "feature": "expected_T",
+   "coef": 0.7912275248699898
+  },
+  {
+   "feature": "expected_SH",
+   "coef": 0.7799251536884928
+  },
+  {
+   "feature": "llr_second_best",
+   "coef": -0.7582724769375331
+  },
+  {
+   "feature": "top_competitor_UH",
+   "coef": 0.7436656630596974
+  },
+  {
+   "feature": "gop_lpr_i",
+   "coef": -0.714688513349107
+  },
+  {
+   "feature": "expected_OY",
+   "coef": -0.7054922036685596
+  },
+  {
+   "feature": "top_competitor_F",
+   "coef": -0.6980978463941001
+  },
+  {
+   "feature": "position_initial",
+   "coef": -0.6975130450673375
+  },
+  {
+   "feature": "expected_TH",
+   "coef": -0.6776357582724287
+  },
+  {
+   "feature": "top_competitor_G",
+   "coef": -0.6726533760239523
+  },
+  {
+   "feature": "expected_AA",
+   "coef": -0.6723254220684264
+  },
+  {
+   "feature": "expected_Y",
+   "coef": 0.6419750247232736
+  },
+  {
+   "feature": "expected_D",
+   "coef": 0.6024371075309256
+  },
+  {
+   "feature": "expected_UW",
+   "coef": -0.5797572136968296
+  },
+  {
+   "feature": "top_competitor_EH",
+   "coef": 0.5756539791594378
+  },
+  {
+   "feature": "top_competitor_V",
+   "coef": -0.5716239981704021
+  },
+  {
+   "feature": "top_competitor_TH",
+   "coef": 0.5553234609455364
+  },
+  {
+   "feature": "llr_best_speaker_rel",
+   "coef": 0.5413178215804314
+  },
+  {
+   "feature": "top_competitor_EY",
+   "coef": 0.5396672382748919
+  },
+  {
+   "feature": "expected_AW",
+   "coef": 0.522040193257951
+  },
+  {
+   "feature": "expected_ZH",
+   "coef": 0.5169244246625699
+  },
+  {
+   "feature": "top_competitor_SH",
+   "coef": -0.5134580849174236
+  },
+  {
+   "feature": "ll_canonical_per_frame",
+   "coef": -0.5010363400258733
+  },
+  {
+   "feature": "top_competitor_JH",
+   "coef": 0.4857473394143083
+  },
+  {
+   "feature": "top_competitor_DH",
+   "coef": -0.46653329402808114
+  },
+  {
+   "feature": "top_competitor_K",
+   "coef": -0.4644494654526059
+  },
+  {
+   "feature": "expected_F",
+   "coef": 0.44610236099527634
+  },
+  {
+   "feature": "top_competitor_HH",
+   "coef": 0.42125603858176647
+  },
+  {
+   "feature": "top_competitor_N",
+   "coef": -0.38170545862324873
+  },
+  {
+   "feature": "expected_G",
+   "coef": 0.37887257144839104
+  },
+  {
+   "feature": "top_competitor_OY",
+   "coef": -0.3647839572503144
+  },
+  {
+   "feature": "top_competitor_B",
+   "coef": -0.3624434227365889
+  },
+  {
+   "feature": "expected_CH",
+   "coef": -0.3539613638164937
+  },
+  {
+   "feature": "top_competitor_AY",
+   "coef": 0.32849938787212923
+  },
+  {
+   "feature": "expected_AY",
+   "coef": -0.32510256085600653
+  },
+  {
+   "feature": "top_competitor_L",
+   "coef": 0.31472465351909323
+  },
+  {
+   "feature": "top_competitor_AE",
+   "coef": 0.31461987927060336
+  },
+  {
+   "feature": "syllable_count",
+   "coef": -0.31360161603763115
+  },
+  {
+   "feature": "top_competitor_Z",
+   "coef": -0.3111340991242562
+  },
+  {
+   "feature": "top_competitor_AH",
+   "coef": 0.2942521498226655
+  },
+  {
+   "feature": "position_final",
+   "coef": -0.28529628653384753
+  },
+  {
+   "feature": "top_competitor_OW",
+   "coef": 0.2722011583959837
+  },
+  {
+   "feature": "expected_NG",
+   "coef": 0.22632038935770232
+  },
+  {
+   "feature": "llr_best_origin_stopping",
+   "coef": 0.2164573584461436
+  },
+  {
+   "feature": "expected_L",
+   "coef": -0.2106876500171289
+  },
+  {
+   "feature": "top_competitor_W",
+   "coef": -0.2081544079962987
+  },
+  {
+   "feature": "top_competitor_D",
+   "coef": 0.19523478717968903
+  },
+  {
+   "feature": "entropy",
+   "coef": 0.19337772142318407
+  },
+  {
+   "feature": "top_competitor_AA",
+   "coef": -0.1830130283162237
+  },
+  {
+   "feature": "top_competitor_IY",
+   "coef": 0.17845041176743393
+  },
+  {
+   "feature": "top_competitor_T",
+   "coef": -0.17025513489066574
+  },
+  {
+   "feature": "top_competitor_P",
+   "coef": 0.16644403439248961
+  },
+  {
+   "feature": "dur_z",
+   "coef": 0.15573490627514996
+  },
+  {
+   "feature": "llr_best_origin_canonical",
+   "coef": 0.14977757841593842
+  },
+  {
+   "feature": "position_single",
+   "coef": 0.14096158473943954
+  },
+  {
+   "feature": "position_medial",
+   "coef": -0.13356701735889534
+  },
+  {
+   "feature": "llr_best_origin_deletion",
+   "coef": 0.12491075367509155
+  },
+  {
+   "feature": "dur_z_speaker_rel",
+   "coef": -0.1115795212689095
+  },
+  {
+   "feature": "top_competitor_AW",
+   "coef": 0.09109646630195527
+  },
+  {
+   "feature": "expected_EH",
+   "coef": -0.0880105235064432
+  },
+  {
+   "feature": "llr_best_origin_fronting",
+   "coef": -0.08546281451628865
+  },
+  {
+   "feature": "llr_best_origin_devoicing_voicing",
+   "coef": -0.08470261924813959
+  },
+  {
+   "feature": "top_competitor_Y",
+   "coef": 0.08020977671561225
+  },
+  {
+   "feature": "free_decode_gap",
+   "coef": 0.07523861762577597
+  },
+  {
+   "feature": "llr_best_origin_backing",
+   "coef": 0.06856625111952602
+  },
+  {
+   "feature": "top_competitor_ZH",
+   "coef": -0.06319478717710231
+  },
+  {
+   "feature": "top_competitor_S",
+   "coef": -0.06072633683869451
+  },
+  {
+   "feature": "top_competitor_ER",
+   "coef": 0.04043022297810275
+  },
+  {
+   "feature": "llr_best_origin_deaffrication",
+   "coef": -0.03796949353653899
+  },
+  {
+   "feature": "top_competitor_AO",
+   "coef": 0.03270296238580657
+  },
+  {
+   "feature": "top_competitor_UW",
+   "coef": -0.030379020671618916
+  },
+  {
+   "feature": "top_competitor_M",
+   "coef": -0.022779139355743674
+  },
+  {
+   "feature": "gop_lpr_i_speaker_rel",
+   "coef": 0.016520097161557556
+  },
+  {
+   "feature": "llr_margin",
+   "coef": -0.008665964352812975
+  },
+  {
+   "feature": "top_competitor_R",
+   "coef": 0.003202635596772437
+  },
+  {
+   "feature": "expected_IY",
+   "coef": -0.0004937631149358837
+  }
+ ]
+}

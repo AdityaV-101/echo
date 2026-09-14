@@ -4,6 +4,70 @@ Every number below was produced by running the script named next to it -
 none are estimates. Re-run the named script if the underlying cache
 changes and re-paste.
 
+## Phase 3 classifier: calibration is bad, do not threshold raw probabilities
+
+`eval/train_phase3.py` computed a reliability diagram and Expected
+Calibration Error (ECE) on the selected model's (logistic regression)
+out-of-fold predictions, pooled child rows, 125 speakers - `class_weight=
+"balanced"` was used to fight the ~2-3% base rate, and it has the known
+side effect of pushing `predict_proba` output away from true class-
+conditional probabilities:
+
+| predicted P(error) bin | count | mean predicted | actual error rate |
+|---|---|---|---|
+| 0.0-0.1 | 6572 | 0.043 | 0.001 |
+| 0.5-0.6 | 882 | 0.549 | 0.023 |
+| 0.7-0.8 | 590 | 0.748 | 0.054 |
+| 0.9-1.0 | 256 | 0.942 | 0.262 |
+
+**ECE = 0.233.** In the model's most confident bin, it says "94% sure this
+is an error" on average and is right 26% of the time. **This model's raw
+probabilities cannot be used to set a threshold - Phase 5's FRR<=0.05
+constraint is meaningless against an uncalibrated score.** Platt scaling or
+isotonic regression (already planned in the original Phase 3 spec,
+"recalibrate the probability on a held-out child slice") is now a hard
+prerequisite for Phase 5, not an optional refinement - confirmed necessary
+by this diagram, not assumed. See `eval/reliability_diagram.png`.
+
+## Phase 3 classifier: coefficients, and two things that need a closer look
+
+Full ranked list in `eval/phase3_results.json` (`lr_coefficients_standardized`,
+final model fit on all pooled data, standardized features so magnitudes are
+comparable). The core acoustic features behave as expected: `gop_i`
+(-2.19, higher goodness-of-pronunciation -> lower P(error), matches its
+Phase 2 univariate correlation of -0.337) and `llr_deletion` (+1.93, a
+plausible deletion candidate -> higher P(error)) both have the sign they
+should.
+
+**Two things flagged, not smoothed over:**
+
+1. **`llr_best`'s sign flipped.** Phase 2's univariate check found
+   `llr_best` positively correlated with error (r=+0.256 overall, +0.182
+   child) - more evidence for an alternative candidate should mean more
+   likely an error, and it does on its own. In the full model, holding
+   everything else constant, its standardized coefficient is **-1.65**,
+   the opposite direction. This is a textbook multicollinearity/suppression
+   pattern (`llr_best` is correlated with `gop_i`, `gop_lpr_i`, and the
+   phoneme-identity dummies below), not a data error, but it means
+   `llr_best`'s marginal contribution inside this model is not what its
+   univariate signal alone would suggest - worth a VIF check or dropping
+   correlated features one at a time before trusting this coefficient's
+   sign in isolation.
+2. **Target-phoneme identity dummies dominate the top of the ranking.**
+   5 of the top 9 coefficients by magnitude are `expected_*` (which phone
+   is the target): `expected_ER` (-2.87), `expected_N` (+2.41),
+   `expected_M` (+2.36), `expected_DH` (-1.96), `expected_W` (+1.94),
+   `expected_S` (+1.67) - all ranked above every acoustic feature except
+   `gop_i`. M and N are typically among the earliest, easiest sounds
+   developmentally, so a strong positive "this target phoneme itself
+   predicts error" coefficient is not an obvious acoustic finding - it may
+   be capturing this corpus's specific annotation patterns or word-list
+   composition rather than something that generalizes to Echo's own level
+   words. **Open question, not resolved here:** is the model substantially
+   scoring "which phoneme is this" rather than "how good was this specific
+   attempt"? Worth checking by re-running with the `expected_*` dummies
+   dropped and seeing how much PR-AUC survives on acoustic features alone.
+
 ## Precision ceiling at the child slice's real base rate
 
 `eval/check_extraction_bias.py` confirmed the child slice's base rate is

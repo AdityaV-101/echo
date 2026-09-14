@@ -1,9 +1,0 @@
-{
- "winner_model": "logistic_regression",
- "point_delta": 0.23886416311352143,
- "ci": [
-  0.04784942511608802,
-  0.39001724706238255
- ],
- "frac_positive": 0.9975
-}
