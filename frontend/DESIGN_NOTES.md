@@ -104,3 +104,70 @@ redraw first if continuing - listed here rather than left for someone else
 to discover. `ball, bed, bus, cup, door, duck, hat, hen, pen, pig, man, map,
 moon, mug, nose, web` read clearly and are the icons I'd point to as the
 actual target quality bar.
+
+## Part 5: Practice screen redesign
+
+Full rewrite of `WordPractice.jsx` plus a large new CSS block
+(`.screen-practice--v2` and children) in `index.css`, and a new
+`graphemeHighlight.js` heuristic that highlights the letter(s) most likely
+to correspond to the target ARPABET phoneme inside the word itself (e.g.
+the "m" in "mug" for target `/M/`), with a sound chip (`/M/`) next to the
+word as a second, unambiguous channel for kids who can't yet map letters to
+sounds. Settings (speak-aloud toggle, rate slider) moved behind a gear
+button instead of sitting permanently on screen. Mic button recolored from
+red to teal (red reads as an error/stop color, wrong for an action that's
+never itself a failure). Progress (word-attempt counter driving the flame
+streak) increments on any scored attempt except `unclear_recording` -
+deliberately driven by effort, not by the model's verdict, since measured
+recall on real errors is only a few percent (RESULTS.md) and can't carry an
+honest reward economy on its own.
+
+**Two real screenshot-driven layout rounds, not a single pass:**
+
+Round 1 (`practice-r1.png`, 1280x900): word-card hero, grapheme highlight,
+sound chip, and teal mic button all worked, but at wide viewport there was
+significant dead space on the left and right of the centered column, and
+Echo (the mascot) sat below the word row rather than genuinely "beside" the
+card as the brief asked for - the same complaint as the original brief,
+just relocated from top/bottom to the sides.
+
+Round 2 fix: restructured the JSX into `.practice-hero-row` wrapping the
+word-card and a new `.practice-info-col` (word row + sound chip + mascot),
+with CSS making that a `flex-direction: row` pairing at ≥760px and
+collapsing to a stacked column below. Verified via fresh screenshots at
+both 1280x900 (`practice-r2-wide.png`) and 390x844 (`practice-r2-mobile.png`):
+at wide viewport the word card now sits on the left with the word/chip/Echo
+genuinely beside it as a pair, dead space substantially reduced; at mobile
+width everything stacks cleanly in a single column with no horizontal
+overflow and the mic bar stays anchored at the bottom.
+
+**Verdict-state review**: built `mock-server/screenshot_verdicts.mjs`,
+which stubs `getUserMedia`/`MediaRecorder` in-page (headless Chromium's
+fake-media-device flags hung rather than resolving in this environment, so
+rather than fight that, the script substitutes a real-but-silent
+`MediaStream`/`Blob` so the actual `handleMicClick` record → score code
+path runs for real) and drives the mock status bar's force buttons to
+capture `wrong`, `unclear`, and `unclear_recording` as one composite image.
+Confirmed the three non-"correct" states are clearly differentiated by
+copy and color, not by mascot pose alone: `wrong` shows warm orange
+corrective text naming the target sound and models the word aloud at a
+slower rate; `unclear` shows calm gray "let's try that one more time"
+phrasing with no naming (avoids teaching a wrong sound when the model
+itself isn't confident); `unclear_recording` is explicitly framed as a mic
+problem ("can you try again a bit closer to the microphone?") rather than
+a pronunciation judgment, with a mic emoji reinforcing that framing. All
+three offer "Try again" plus "Next word" so a child is never stuck.
+
+**Honest quality note**: the mascot's per-state pose differences for
+`demonstrating`/`encouraging`/`thinking` (small ear-rotation and head-tilt
+transforms, a few degrees each) are real in the CSS but read as subtle at
+110px in a static screenshot - the text/color channel is doing most of the
+differentiation work right now, not the mascot's body language. Given this
+is the second design pass over the mascot itself (3 critique rounds already
+spent in Part 3) and the text/color signal is unambiguous on its own, this
+is logged as a polish gap rather than reworked further this run.
+
+Not yet verified in this pass: the `MAX_WRONG_RETRIES` (3) and
+`MAX_UNCLEAR_IN_ROW` (2) auto-advance behavior over a full multi-attempt
+sequence, and the settings panel's open/closed visual state - both are
+implemented but only exercised via code read, not screenshotted.

@@ -834,12 +834,14 @@ input {
 }
 
 .mic-button {
-  width: 110px;
-  height: 110px;
+  /* Was --color-danger (red) - red reads as stop/danger, and this button
+     means "your turn, go", not "stop". Teal (--color-secondary) instead. */
+  width: 116px;
+  height: 116px;
   border-radius: 50%;
-  background: linear-gradient(150deg, #ff8f8f 0%, var(--color-danger) 55%, #e64f4f 100%);
+  background: linear-gradient(150deg, #5fe0cc 0%, var(--color-secondary) 55%, var(--color-secondary-dark) 100%);
   border: none;
-  box-shadow: 0 6px 0 #d64f4f, 0 10px 26px rgba(255, 107, 107, 0.4);
+  box-shadow: 0 7px 0 var(--color-secondary-dark), 0 12px 28px rgba(20, 199, 174, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -856,14 +858,18 @@ input {
   transform: scale(1.05);
 }
 .mic-button:active {
-  transform: translateY(3px);
-  box-shadow: 0 3px 0 #d64f4f;
+  transform: translateY(4px);
+  box-shadow: 0 3px 0 var(--color-secondary-dark);
   animation: none;
 }
 .mic-button--recording {
   background: linear-gradient(150deg, var(--color-primary-light) 0%, var(--color-primary) 55%, var(--color-primary-dark) 100%);
-  box-shadow: 0 6px 0 var(--color-primary-dark), 0 10px 26px rgba(255, 138, 61, 0.45);
-  animation: none;
+  box-shadow: 0 7px 0 var(--color-primary-dark), 0 12px 28px rgba(255, 138, 61, 0.45);
+  animation: mic-pulse 1s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
 }
 .mic-level-ring {
   position: absolute;
@@ -1459,9 +1465,156 @@ input {
 .word-card-fallback-letter {
   font-weight: 800;
   color: var(--word-art-outline, #3a2a1e);
-  font-family: var(--font-display, inherit);
+  font-family: var(--font-heading);
   line-height: 1;
 }
 .word-illustration {
   display: block;
+}
+
+/* ===== Part 5: practice screen v2 - word card as hero, full-viewport
+   composition, mic anchored in a bottom bar, settings behind a button ===== */
+.screen-practice--v2 {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 0;
+}
+.practice-streak {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--color-primary-dark);
+  white-space: nowrap;
+}
+.practice-settings-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--color-card);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 8px;
+  animation: settingsDrop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes settingsDrop {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.practice-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 12px 16px 24px;
+}
+/* Stacked (card above word+mascot) below ~760px - the width there isn't
+   enough for a side-by-side layout to read as anything but cramped.
+   Side-by-side above that, which is also the fix for wide viewports
+   otherwise leaving the whole left/right two-thirds of the screen empty -
+   the exact "dead space" complaint the brief made about the OLD layout,
+   just relocated from top/bottom to left/right if this weren't here. */
+.practice-hero-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+@media (min-width: 760px) {
+  .practice-hero-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+  }
+}
+.practice-word-card-wrap {
+  filter: drop-shadow(0 10px 0 var(--word-card-shadow, #e8d4b8));
+  flex-shrink: 0;
+}
+.practice-info-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.practice-word-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.practice-word-row .target-word {
+  font-family: var(--font-heading);
+  font-size: 72px;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1;
+}
+.target-word-highlight {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+  text-decoration-thickness: 6px;
+  text-decoration-color: var(--color-primary);
+  text-underline-offset: 6px;
+  text-decoration-style: wavy;
+}
+.target-sound-chip {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark));
+  padding: 8px 18px;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-secondary-dark);
+}
+.practice-feedback-area {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.scoring-hint {
+  color: var(--color-text-soft);
+  font-weight: 700;
+}
+.feedback-text {
+  font-size: 18px;
+  font-weight: 700;
+  max-width: 520px;
+  margin: 0;
+}
+.feedback-text--correct { color: var(--color-secondary-dark); }
+.feedback-text--unclear { color: var(--color-text-soft); }
+.feedback-text--wrong { color: var(--color-primary-dark); }
+.feedback-text--mic { color: var(--color-text-soft); font-style: italic; }
+
+.practice-bottom-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--color-bg) 55%, transparent);
+}
+.practice-bottom-bar--actions {
+  flex-direction: row;
+  justify-content: center;
+  gap: 14px;
+}
+
+@media (max-width: 480px) {
+  .practice-word-row .target-word {
+    font-size: 52px;
+  }
 }
