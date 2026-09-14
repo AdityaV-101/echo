@@ -68,15 +68,63 @@ FRR<=0.05":
   trained on all 125 pooled speakers) to `backend/data/phase3_model/` and
   loaded at inference time - not refit per request.
 - Wired into `backend/main.py` behind `USE_PHASE3_SCORER=1` (same
-  selection pattern as the existing `USE_REAL_SCORER`), so the GOP
-  z-score path (`scorer.py`) is not deleted - per the rebuild's own rule
-  4 ("when the rebuild beats the old path, delete the loser"), it hasn't
-  been shown to beat it on the measure that matters (within-phoneme,
-  child slice), so both remain available.
+  selection pattern as the existing `USE_REAL_SCORER`) - see "What ships
+  by default" below for whether that flag should be on.
 - End-to-end integration smoke-tested directly against real speechocean762
   R-target words through `scorer_phase3.score_word` and `main.py`'s
   downstream DB bookkeeping (not just unit-level) - passed, and is what
   caught the `unclear_recording`/`NOT NULL` bug above.
+- **Operating point corrected** (see RESULTS.md's "Phase 5 operating
+  point, corrected" section): the joint (T_ERROR, k-of-n) sweep selects
+  **k=1, n=1 (no corroboration), T_ERROR=0.20** - recall=0.427,
+  precision=0.138, FRR=0.0485 - not the originally-stacked T_ERROR=0.80/
+  2-of-3, which caught none of the 11 available positive windows. A real
+  bug (`"candidate_wrong"` vs `aggregation.py`'s `"wrong"`) was found and
+  fixed while redoing this - the k-of-n layer was a silent no-op before.
+  `backend/decision.py`'s constants are updated to the new point.
+
+## What ships by default
+
+**Recommendation: yes, set `USE_PHASE3_SCORER=1` as the default, GOP
+z-score kept behind the flag (opt-in via `USE_REAL_SCORER=1` if
+`USE_PHASE3_SCORER` is unset).** Reasoning, not just the conclusion:
+
+- **The comparison that matters isn't "which one wins," it's "which one
+  fails more safely."** GOP z-score's measured child-slice FRR is
+  19-20% (`eval/baselines.json`) - it violates the project's own
+  non-negotiable FRR<=0.05 constraint by roughly 4x, confirmed, not
+  estimated. The new pipeline's operating point sits at FRR=0.0485, right
+  at the budget. Shipping GOP z-score as the default while already knowing
+  it fails the project's own stated safety bar is harder to justify than
+  shipping the new pipeline's unproven-but-budget-respecting one.
+- **Recall is no longer negligible.** The corrected operating point
+  catches 42.7% of real child errors (pooled across phonemes) - a real,
+  usable number, not the 4.4% single-attempt recall the earlier stacked
+  setting implied.
+- **Conclusion (a) plus R's individual signal**: the feature set
+  discriminates within-phoneme once there's data (L2 diagnostic,
+  +0.123 [+0.055, +0.199]), and R - the single heaviest-weighted
+  curriculum phoneme (57) - shows the clearest individual within-phoneme
+  effect on both the L2 diagnostic (+0.262) and, thinly, the child slice
+  itself (+0.047, only 14 positives). The mechanism is sound; the child
+  data will improve with PERCEPT-R, and the architecture (abstain-capable,
+  gated, calibrated) is what should be receiving that data, not a scorer
+  already known to violate its own safety constraint.
+
+**What argues against it, stated plainly rather than omitted:** the
+selected point's FRR 95% CI is [0.041, 0.057] - the point estimate clears
+the budget, but the CI's upper bound does not. This is not "proven safe,"
+it's "measured at the budget with real sampling uncertainty in the same
+direction as the risk." Precision is low (13.8%): under the current
+k=1,n=1 design, a confirmed_error reaches the child-facing feedback
+(`scorer_phase3._generate_feedback`'s "let's work on this together"
+message, not a raw "wrong") on roughly 1 in 18 attempts, correct about 1 in
+7 times it fires. The tone is non-punitive by design, but the underlying
+phoneme call is wrong most of the time it's made. **Recommendation stands,
+but this should ship with production monitoring on the actual
+therapist-queue firing rate** (not just the offline dev-set numbers) before
+trusting the FRR budget holds outside speechocean762's speaker population -
+that monitoring is not built in this session.
 
 
 Written in response to review feedback on Phase 0, before touching a

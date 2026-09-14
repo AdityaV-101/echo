@@ -13,19 +13,25 @@ from scorer_common import canonical_phonemes_for_word
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("speechpal.main")
 
+# Default ON, per eval/phase3_protocol.md's "What ships by default": GOP
+# z-score's measured child-slice FRR (19-20%, eval/baselines.json) already
+# violates the project's own FRR<=0.05 constraint by ~4x; this pipeline's
+# operating point respects that budget (FRR=0.0485, see RESULTS.md's
+# "Phase 5 operating point, corrected"). Set USE_PHASE3_SCORER=0 to fall
+# back to the GOP z-score path (USE_REAL_SCORER=1) or the stub.
+USE_PHASE3_SCORER = os.environ.get("USE_PHASE3_SCORER", "1") == "1"
 USE_REAL_SCORER = os.environ.get("USE_REAL_SCORER") == "1"
-USE_PHASE3_SCORER = os.environ.get("USE_PHASE3_SCORER") == "1"
 if USE_PHASE3_SCORER:
     from scorer_phase3 import score_word
 
     logger.info(
         "Using PHASE 3 scorer (paired-LLR/GOP features -> frozen classifier -> "
-        "abstention-heavy k-of-n decision, see eval/phase3_protocol.md)."
+        "abstention-heavy decision, see eval/phase3_protocol.md). Set USE_PHASE3_SCORER=0 to opt out."
     )
 elif USE_REAL_SCORER:
     from scorer import score_word
 
-    logger.info("Using REAL scorer (wav2vec2 phoneme recognizer, GOP + z-score).")
+    logger.info("Using REAL scorer (wav2vec2 phoneme recognizer, GOP + z-score) - known to exceed the FRR<=0.05 budget on the child slice.")
 else:
     from scorer_stub import score_word
 

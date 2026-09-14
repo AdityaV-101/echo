@@ -4,6 +4,81 @@ Every number below was produced by running the script named next to it -
 none are estimates. Re-run the named script if the underlying cache
 changes and re-paste.
 
+## Phase 5 operating point, corrected: joint sweep, and the answer is not what was expected
+
+**Two corrections to the first version of Phase 5** (`eval/phase5_joint_sweep.py`):
+the FRR<=0.05 budget must apply to the AGGREGATED decision (what a child or
+therapist actually sees - a single attempt no longer names anything), not
+the single attempt; and (T_ERROR, k-of-n) must be swept jointly, not
+stacked (pick a safe single-attempt T_ERROR, then bolt k-of-n on top, which
+is what the previous version did).
+
+**The joint sweep's answer is not what was expected going in.** The point
+that maximizes aggregated recall subject to aggregated FRR<=0.05 is
+**k=1, n=1 - no corroboration at all - at T_ERROR=0.20**, not a looser
+T_ERROR with 2-of-3 or 3-of-4 doing the work:
+
+| configuration | T_ERROR | aggregated recall | aggregated precision | aggregated FRR | n_windows | n_pos |
+|---|---|---|---|---|---|---|
+| **1-of-1 (selected)** | 0.20 | **0.427** | 0.138 | 0.0485 | 16422 | 293 |
+| 2-of-4 (best k>1 under budget) | 0.35 | 0.263 | 0.200 | 0.0060 | 3325 | 19 |
+| 3-of-4 | 0.15 | 0.333 | 0.020 | 0.0151 | 3325 | 3 |
+| 2-of-3 | 0.15 | 0.364 | 0.020 | 0.0404 | 4764 | 11 |
+| current stacked setting (T=0.80, 2-of-3) | 0.80 | **0.000** | undefined | 0.0000 | 4764 | 11 |
+
+Every k-of-n configuration tested has lower recall than plain
+single-attempt thresholding at the same FRR budget, and the previous
+stacked setting (T_ERROR=0.80 chosen for single-attempt safety, then
+2-of-3 on top) **catches none of the 11 available positive windows** -
+it wasn't a good design, it was actively worse than doing nothing extra.
+
+**Why: this is the direct, predicted consequence of the dispersion
+diagnostic already run** (X²/df=4.31 on GOP z-score's per-speaker false-
+alarm rate - false alarms are speaker-systematic, not independent). k-of-n
+corroboration assumes repeated attempts behave like independent draws;
+when a speaker's false-alarm rate is a persistent trait rather than noise,
+requiring the SAME speaker to cross threshold multiple times doesn't
+separate signal from that speaker's tendency - it can reward a
+consistently-over-flagged speaker's noise as readily as a consistently-
+under-flagged speaker's real errors get missed. The mechanism is real and
+correctly implemented (and a genuine bug was found and fixed while
+rebuilding this - `classify_single_attempt` returned `"candidate_wrong"`,
+which `aggregate_k_of_n` never matched since it counts the literal string
+`"wrong"`; the k-of-n layer was a silent no-op in the previous version),
+but the data says it isn't earning its complexity at the current model's
+performance level.
+
+**Selected operating point, reported in full:**
+
+| metric | value |
+|---|---|
+| aggregated recall | 0.427 [95% CI 0.361, 0.483] |
+| aggregated precision | 0.138 [95% CI 0.103, 0.180] |
+| aggregated FRR | 0.0485 [95% CI 0.041, 0.057] |
+| abstain rate | 0.0% (k=1,n=1 - every attempt resolves immediately) |
+| **expected false corrections per 10-word session** | **0.48** |
+
+The last number is the one to reason about as a product decision: 0.48
+expected false corrections per 10-word session means, on average, **about
+one false "you got that wrong" every two 10-word sessions** (1/0.48 ≈ 2.1
+sessions) for a child who is, in fact, saying every sound correctly. This
+is the real, concrete cost of the FRR budget at this base rate, and it is
+what "FRR<=0.05" actually feels like in a session rather than an abstract
+rate.
+
+**What this means for the design:** k=1,n=1 means every attempt is final -
+there is no "wait for corroboration before naming anything" cushion, which
+was the qualitative design goal two turns ago. The literal optimization
+(max recall subject to the FRR budget, as explicitly specified) does not
+choose that cushion; it chooses raw recall instead. If the "never act on
+one attempt" property matters enough to give up recall for, **2-of-4 at
+T=0.35** (recall 0.263, FRR 0.006, comfortably under budget, real
+corroboration) is the documented alternative in `eval/phase5_joint_sweep.json`.
+Both are implemented correctly in `backend/decision.py`; the constants
+there are currently set to the literal optimum (k=1, n=1, T_ERROR=0.20)
+since that is what the stated selection rule picks, with this tension
+recorded here rather than silently resolved.
+
 ## Within-phoneme evaluation: the real headline, and it does not clear baseline
 
 The most important test run on this project so far

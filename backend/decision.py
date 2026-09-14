@@ -1,41 +1,60 @@
-"""Phase 5: the operating point, deliberately abstention-heavy.
+"""Phase 5: the operating point, corrected to a joint sweep.
 
-eval/phase3_protocol.md's modeling freeze (2026-09-13) found the frozen
-classifier's real, usable advantage over the GOP z-score baseline
-unproven on the child slice's own target phonemes (Echo-weighted
-within-phoneme delta 95% CI [-0.085, +0.148] - crosses zero) - not because
-the features don't work (they clearly do once there's enough data - see
-the L2/all-speakers diagnostic, weighted delta +0.123 [+0.055, +0.199]),
-but because there isn't enough labeled child data yet for Echo's actual
-target phonemes. An unproven margin at a 2-3% base rate is exactly the
-situation where the product should default to NOT naming a specific error
-until the evidence is strong and corroborated across more than one
-attempt - that is the correct default here, not a fallback for a model
-that "should" be more confident.
+eval/phase5_joint_sweep.py fixed two problems with the first version of
+this module:
 
-Two layers:
-1. Single attempt: p < T_CORRECT -> "correct"; p >= T_ERROR -> tentative
-   "candidate_wrong" (strong evidence, but not yet acted on); otherwise
-   "unclear" (genuinely ambiguous - practice-screen feedback stays
-   encouraging and non-committal either way, per Phase 8's product rule).
-2. k-of-n corroboration (backend/aggregation.py): a tentative
-   "candidate_wrong" is only escalated to a CONFIRMED, named error - routed
-   to the therapist review queue - once K_OF_N of the last N_WINDOW
-   attempts at that phoneme are tentative "candidate_wrong". A single
-   strong-evidence attempt alone never names a specific error to anyone.
+1. The FRR<=0.05 budget must apply to the AGGREGATED (what a child/
+   therapist actually sees) decision, not the single attempt - a single
+   attempt no longer names anything on its own, so its own FRR isn't the
+   user-facing quantity.
+2. (T_ERROR, k-of-n) must be swept JOINTLY, not stacked (pick T_ERROR from
+   a single-attempt curve, then bolt k-of-n on top).
 
-T_CORRECT / T_ERROR come from eval/derive_decision_thresholds.py's
-coverage-precision curve (eval/decision_thresholds.json - read off the
-frozen model's already-computed out-of-fold scores, not a new sweep).
-Important: the original Phase 5 rule ("lowest threshold clearing
-FRR<=0.05") would pick T_ERROR=0.20 here - technically compliant
-(FRR=0.0485) but right at the edge of the constraint, and it would
-collapse the abstain band if T_CORRECT used the same cut. T_ERROR=0.8 is a
-deliberate policy choice instead: a strong-evidence bar comfortably inside
-the constraint (FRR=0.0004, precision=0.684 vs the naive cut's 0.138),
-trading single-attempt recall (0.044) for k-of-n corroboration across
-repeated practice attempts. T_CORRECT=0.1 keeps the abstain band wide by
-design, matching the abstention-heavy default.
+The joint sweep's answer is not what was expected going in: the point that
+maximizes AGGREGATED recall subject to AGGREGATED FRR<=0.05 is **k=1, n=1
+(no corroboration at all), T_ERROR=0.20** - not a looser T_ERROR with
+2-of-3 or 3-of-4 doing the work. Every k-of-n configuration tested (2-of-3,
+3-of-4, 2-of-4, 3-of-5) has LOWER recall at FRR<=0.05 than plain
+single-attempt thresholding, and the previous stacked setting
+(T_ERROR=0.80, 2-of-3) has recall=0.000 on the 11 available positive
+windows - it was catching nothing. This is not noise: it's the direct,
+predicted consequence of eval/phase3_multicollinearity.py's ... no, of
+RESULTS.md's dispersion diagnostic (X^2/df=4.31 on GOP z-score's false
+alarms) - false alarms are speaker-systematic, so requiring the SAME
+speaker to cross threshold multiple times doesn't discriminate signal
+from that speaker's persistent tendency the way independence would
+predict; if anything it rewards speakers who are consistently over- or
+under-flagged rather than washing that out.
+
+Bug fixed while rebuilding this: classify_single_attempt previously
+returned "candidate_wrong", which backend/aggregation.py's
+aggregate_k_of_n never matches (it counts the literal string "wrong") -
+the k-of-n layer was silently a no-op in the first version of this module.
+Fixed by using "wrong" as the stored/compared value; moot for the k=1,n=1
+operating point (aggregation is bypassed either way) but real for anyone
+using aggregation.py directly at k>1.
+
+T_ERROR=0.20, T_CORRECT=0.10: at T_ERROR=0.20, aggregated (=single-attempt,
+since n=1) FRR=0.0485, recall=0.427, precision=0.138 (measured on pooled
+child speakers' out-of-fold scores - eval/phase5_joint_sweep.json).
+T_CORRECT is a UX-only cut below T_ERROR (doesn't affect the measured
+safety numbers, which depend only on the T_ERROR cut) - kept low so most
+attempts read as confidently "correct" rather than "unclear", consistent
+with the low base rate.
+
+Precision at this point (13.8%) is low - most flags are false alarms, an
+unavoidable consequence of a ~1.8% base rate (see RESULTS.md's precision-
+ceiling section), not a defect of this operating point specifically. What
+FRR<=0.05 guarantees is that a truly-correct child is rarely told they're
+wrong (<5% of the time) - it does not guarantee that a flag, when it
+fires, is usually right. A k=2,n=4 alternative (T=0.35: recall=0.263,
+FRR=0.006, comfortably under budget) is available in
+eval/phase5_joint_sweep.json for anyone who wants SOME corroboration
+before ever queuing a case, at a real recall cost - not used as the
+default here because the explicit selection rule (max recall subject to
+the FRR budget) does not choose it, but recorded because reasonable people
+could prefer it for the "never act on one attempt" property k=1,n=1 gives
+up.
 """
 import json
 from dataclasses import dataclass
@@ -55,10 +74,10 @@ _SCALER = None
 _ENCODER = None
 _METADATA = None
 
-T_CORRECT = 0.1
-T_ERROR = 0.8
-K_OF_N = 2
-N_WINDOW = 3
+T_CORRECT = 0.10
+T_ERROR = 0.20
+K_OF_N = 1
+N_WINDOW = 1
 
 
 def _load():
@@ -74,7 +93,7 @@ def _load():
 
 @dataclass
 class AttemptDecision:
-    single_status: str  # "correct" | "candidate_wrong" | "unclear"
+    single_status: str  # "correct" | "wrong" | "unclear"
     probability: float
     phoneme: str
     heard: str | None
@@ -126,21 +145,25 @@ def classify_single_attempt(p: float) -> str:
     if p < T_CORRECT:
         return "correct"
     if p >= T_ERROR:
-        return "candidate_wrong"
+        return "wrong"
     return "unclear"
 
 
 def decide(pos: PositionFeatures, word: WordFeatures, user_id: str) -> AttemptDecision:
     """Full Phase 5 decision for one target-phoneme attempt: single-attempt
     call, k-of-n corroboration against this user's recent history at this
-    phoneme, and therapist-queue escalation on a fresh confirmation."""
+    phoneme (a no-op at the current K_OF_N=1/N_WINDOW=1 operating point -
+    see module docstring for why - but left in place, correctly wired
+    against aggregation.py's actual vocabulary, for anyone who switches to
+    a k>1 configuration), and therapist-queue escalation on a fresh
+    confirmation."""
     p, relative = compute_error_probability(pos, word, user_id)
     single_status = classify_single_attempt(p)
     # The specific substituted phone (if any) comes from llr_scorer's winning
     # candidate at this position, not from PositionFeatures - the caller
     # (main.py's /api/score handler) already has that candidate and attaches
     # it to the API response; this module only produces the verdict.
-    heard = pos.llr_best_origin if single_status == "candidate_wrong" and pos.llr_best_origin != "canonical" else None
+    heard = pos.llr_best_origin if single_status == "wrong" and pos.llr_best_origin != "canonical" else None
 
     # Fetch the previous window BEFORE recording this attempt, so we can
     # tell whether this attempt is what newly tips the aggregate into

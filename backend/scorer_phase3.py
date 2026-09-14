@@ -102,7 +102,7 @@ def score_word(
     return {
         "word": word, "canonical": canonical, "target_phoneme": target_phoneme,
         "status": result.confirmed_status,  # "correct" | "pending_review" | "confirmed_error"
-        "single_attempt_status": result.single_status,  # "correct" | "candidate_wrong" | "unclear" - therapist-panel detail only, never child-facing
+        "single_attempt_status": result.single_status,  # "correct" | "wrong" | "unclear" - therapist-panel detail only, never child-facing
         "probability": round(result.probability, 4),
         "heard": result.heard,
         "window": {"n_wrong": result.n_wrong_in_window, "n_total": result.window_size},
