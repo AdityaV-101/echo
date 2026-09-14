@@ -76,11 +76,44 @@ matter - to be decided from the actual fold statistics, not assumed).
   this cross-validation. It is scored exactly once, at Phase 5's final run,
   per the rebuild's ground rule 1.
 - Feature extraction for subtrain (`eval/extract_features_cache.py
-  subtrain`) is required before this can run - subtrain was never
+  subtrain`) was required before this could run (subtrain was never
   feature-extracted during Phases 0-2, which only needed the dev split for
-  checkpointing. That extraction is running now; this document will be
-  updated with the actual fold results once it completes and the CV loop
-  runs.
+  checkpointing) - done, 38,075 rows.
+
+### Actual CV results (`eval/train_phase3.py`)
+
+Grouped 5-fold CV, pooled subtrain+dev (47,076 rows, 125 speakers),
+`class_weight="balanced"` for both models:
+
+| model | fold PR-AUCs (child slice) | mean | std | min | max |
+|---|---|---|---|---|---|
+| logistic regression | 0.148, 0.127, 0.136, 0.321, 0.161 | 0.178 | 0.072 | 0.127 | 0.321 |
+| hist gradient boosting | 0.113, 0.133, 0.125, 0.372, 0.177 | 0.184 | 0.096 | 0.113 | 0.372 |
+
+HGB's mean (0.184) doesn't clear LR's mean+1std (0.178+0.072=0.250), so
+**logistic regression is selected** (per the "keep the linear one if within
+noise, because it's inspectable" rule). Fold 3 is a clear outlier for both
+models (0.321 / 0.372 vs the other folds' 0.11-0.18) - whichever speakers
+landed in that validation fold happen to be unusually well-predicted;
+worth a closer look before trusting the mean too literally, but not
+investigated further in this pass.
+
+**Beat-baseline test**, dev-speaker subset of logistic regression's
+out-of-fold predictions (never trained on these speakers) vs GOP z-score on
+the identical dev child population (3108 rows both):
+
+**delta PR-AUC = +0.2389, 95% CI [+0.0478, +0.3900], P(delta>0)=99.8%.
+Lower bound > 0: Phase 3's classifier beats the GOP z-score baseline on the
+child slice**, per the corrected criterion above.
+
+Caveat disclosed, not hidden: the categorical one-hot encoder (phone
+identity, position, llr_best_origin, top_competitor) was fit on the full
+pooled dataset before the CV split, not per-fold. These are closed,
+linguistically-fixed vocabularies (39 ARPABET phones, 4 positions, ~12
+process names) rather than anything derived from labels or fold-specific
+statistics, so this isn't leakage in the sense that matters for the
+result - but it's a deviation from strict per-fold preprocessing worth
+naming rather than leaving implicit.
 
 ## Precision ceiling (see RESULTS.md for the full derivation)
 
