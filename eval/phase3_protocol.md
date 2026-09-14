@@ -39,24 +39,46 @@ recording a null-percent attempt (a real bug caught and fixed during
 integration - the original code path would have violated the `attempts`
 table's `NOT NULL` constraint).
 
-**Phase 5** (`backend/decision.py`), abstention-heavy by explicit
-instruction, not the original spec's "maximize recall subject to
-FRR<=0.05":
+**Phase 5** (`backend/decision.py`), now **two operating points for two
+consumers**, replacing both the original "maximize recall subject to
+FRR<=0.05" spec and the intermediate k-of-n-corroboration design - see
+RESULTS.md's "Phase 5 operating points: two, not one" for the full
+derivation and the two selection-rule corrections that got here (FRR
+applied to the wrong quantity, then a precision floor replacing it
+entirely once 13.8% precision at 0% abstention turned out not to be a
+usable child-facing number):
 
-- `eval/derive_decision_thresholds.py` found that rule's own answer
-  (T=0.20, FRR=0.0485, recall=0.427) sits right at the edge of the
-  constraint and would collapse the abstain band. **T_ERROR=0.80** is used
-  instead - a strong-evidence bar comfortably inside the constraint
-  (FRR=0.0004, precision=0.684, recall=0.044 on a single attempt).
-  **T_CORRECT=0.10** keeps the abstain band wide by design.
-- A single attempt crossing T_ERROR is only "candidate_wrong" - tentative.
-  `backend/aggregation.py`'s k-of-n (2-of-3 default) corroborates across a
-  child's repeated attempts at the same phoneme before a `confirmed_error`
-  is written to `therapist_review_queue` (`GET /api/therapist/review-queue`).
-  A single attempt never names a specific error to the child or the
-  therapist - child-facing feedback (`scorer_phase3._generate_feedback`)
-  stays encouraging and non-committal until corroborated, per Phase 8's
-  product rule.
+- **Child-facing point** (the only one allowed to name a specific
+  substitution): precision>=0.5 hard constraint, then max recall.
+  **T_ERROR=0.71**: recall=0.061, precision=0.500, FRR=0.0011.
+  **T_CORRECT=0.10** sets the abstain band's floor -> **13.2% measured
+  abstain rate** (0% was the previous, rejected design's number).
+- **Therapist-queue point** (no precision floor): every attempt's
+  probability is ranked (`db.get_top_k_by_probability`,
+  `GET /api/therapist/top-k`) - recall/precision at top-10/25/50 is in
+  RESULTS.md. This is where the higher-recall (up to 0.427 pooled),
+  lower-precision (13.8%) numbers from the intermediate design actually
+  belong.
+- **k-of-n corroboration removed from the live decision path.** Checked
+  twice, under two different selection rules (max recall at FRR<=0.05, and
+  max recall at precision>=0.5): no k-of-n configuration ever wins either
+  comparison, for the same reason both times (the dispersion diagnostic -
+  false alarms are speaker-systematic, not independent).
+  `backend/aggregation.py` is kept as correct, tested, currently-unused
+  infrastructure, not deleted.
+- **A real bug was found and fixed while first building this**:
+  `classify_single_attempt` returned `"candidate_wrong"`, which
+  `aggregate_k_of_n` never matched (counts the literal string `"wrong"`) -
+  the k-of-n layer was a silent no-op in what first shipped. Verified this
+  did not affect any REPORTED number: `eval/phase5_joint_sweep.py` and
+  `eval/phase5_two_points.py` both compute k-of-n counting directly from
+  raw probabilities, never importing `backend.decision`/`backend.aggregation`;
+  `eval/measure_k_of_n.py` calls `aggregate_k_of_n` correctly, on
+  `predict_gop_zscore`'s own `"wrong"`/`"correct"` strings, unrelated to
+  the bug. Moot now regardless, since k-of-n is no longer in the live path.
+- **Naming rule**: a specific substitution is named to the child only at
+  `status=="wrong"` (the child-facing threshold). `"unclear"` is a
+  non-naming nudge - no claim about which sound was wrong.
 - Per-child calibration (`backend/child_calibration.py`): the four
   speaker-relative features (llr_best, gop_i, gop_lpr_i, dur_z) are
   centered on this child's own running per-phoneme mean (Welford, reusing
@@ -72,59 +94,52 @@ FRR<=0.05":
   by default" below for whether that flag should be on.
 - End-to-end integration smoke-tested directly against real speechocean762
   R-target words through `scorer_phase3.score_word` and `main.py`'s
-  downstream DB bookkeeping (not just unit-level) - passed, and is what
-  caught the `unclear_recording`/`NOT NULL` bug above.
-- **Operating point corrected** (see RESULTS.md's "Phase 5 operating
-  point, corrected" section): the joint (T_ERROR, k-of-n) sweep selects
-  **k=1, n=1 (no corroboration), T_ERROR=0.20** - recall=0.427,
-  precision=0.138, FRR=0.0485 - not the originally-stacked T_ERROR=0.80/
-  2-of-3, which caught none of the 11 available positive windows. A real
-  bug (`"candidate_wrong"` vs `aggregation.py`'s `"wrong"`) was found and
-  fixed while redoing this - the k-of-n layer was a silent no-op before.
-  `backend/decision.py`'s constants are updated to the new point.
+  downstream DB bookkeeping (not just unit-level), re-run after the
+  two-point redesign - passed.
 
 ## What ships by default
 
 **Recommendation: yes, set `USE_PHASE3_SCORER=1` as the default, GOP
 z-score kept behind the flag (opt-in via `USE_REAL_SCORER=1` if
-`USE_PHASE3_SCORER` is unset).** Reasoning, not just the conclusion:
+`USE_PHASE3_SCORER` is unset). Updated after the precision-floor
+correction, same conclusion, different reasoning weight** - the numbers
+moved a lot (child-facing recall dropped from 42.7% to 6.1%), so this is
+re-argued from the current numbers, not carried forward:
 
-- **The comparison that matters isn't "which one wins," it's "which one
-  fails more safely."** GOP z-score's measured child-slice FRR is
-  19-20% (`eval/baselines.json`) - it violates the project's own
-  non-negotiable FRR<=0.05 constraint by roughly 4x, confirmed, not
-  estimated. The new pipeline's operating point sits at FRR=0.0485, right
-  at the budget. Shipping GOP z-score as the default while already knowing
-  it fails the project's own stated safety bar is harder to justify than
-  shipping the new pipeline's unproven-but-budget-respecting one.
-- **Recall is no longer negligible.** The corrected operating point
-  catches 42.7% of real child errors (pooled across phonemes) - a real,
-  usable number, not the 4.4% single-attempt recall the earlier stacked
-  setting implied.
-- **Conclusion (a) plus R's individual signal**: the feature set
-  discriminates within-phoneme once there's data (L2 diagnostic,
-  +0.123 [+0.055, +0.199]), and R - the single heaviest-weighted
-  curriculum phoneme (57) - shows the clearest individual within-phoneme
-  effect on both the L2 diagnostic (+0.262) and, thinly, the child slice
-  itself (+0.047, only 14 positives). The mechanism is sound; the child
-  data will improve with PERCEPT-R, and the architecture (abstain-capable,
-  gated, calibrated) is what should be receiving that data, not a scorer
-  already known to violate its own safety constraint.
+- **The comparison that matters is still "which one fails more safely,"
+  and it's now much more lopsided.** GOP z-score's measured child-slice
+  FRR is 19-20% (`eval/baselines.json`). The child-facing point's FRR is
+  **0.0011** - roughly 170x lower, not just "under budget." A truly-correct
+  child is told they're wrong about once every 91 sessions instead of
+  constantly.
+- **Naming recall is now genuinely low (6.1%) - stated plainly, not
+  smoothed over.** Echo will rarely tell a child which specific sound was
+  wrong. This is a real product cost, not a rounding error: most practice
+  attempts, right or wrong, get generic encouragement or a non-naming
+  nudge, never "let's work on your R." The clinical value of detection
+  shifts almost entirely to the **therapist-queue point** (top-10 review
+  is 70% precision, catching real cases at a rate a human can act on) -
+  the product is closer to "practice + a therapist-facing signal" than
+  "practice + real-time child-facing correction," which is exactly the
+  shape Prompt 1's own kill-criterion language anticipated as an
+  acceptable outcome.
+- **Conclusion (a) plus R's individual signal still hold**: the feature
+  set discriminates within-phoneme once there's data (L2 diagnostic,
+  +0.123 [+0.055, +0.199]), R shows the clearest individual within-phoneme
+  effect (L2: +0.262; child, thinly: +0.047 on 14 positives). The
+  mechanism is sound and safety-respecting even though today's naming
+  recall is low; PERCEPT-R is what raises it, not further tuning against
+  this dev set (frozen).
 
-**What argues against it, stated plainly rather than omitted:** the
-selected point's FRR 95% CI is [0.041, 0.057] - the point estimate clears
-the budget, but the CI's upper bound does not. This is not "proven safe,"
-it's "measured at the budget with real sampling uncertainty in the same
-direction as the risk." Precision is low (13.8%): under the current
-k=1,n=1 design, a confirmed_error reaches the child-facing feedback
-(`scorer_phase3._generate_feedback`'s "let's work on this together"
-message, not a raw "wrong") on roughly 1 in 18 attempts, correct about 1 in
-7 times it fires. The tone is non-punitive by design, but the underlying
-phoneme call is wrong most of the time it's made. **Recommendation stands,
-but this should ship with production monitoring on the actual
-therapist-queue firing rate** (not just the offline dev-set numbers) before
-trusting the FRR budget holds outside speechocean762's speaker population -
-that monitoring is not built in this session.
+**What argues against it, stated plainly:** a 6.1%-recall, precision-gated
+naming threshold may feel unresponsive - a child could produce the same
+error repeatedly and rarely hear it named. That's the direct, honest cost
+of respecting the precision floor at this base rate with today's data, not
+a bug. **Recommendation stands, but ship with production monitoring on the
+actual therapist-queue firing rate and the child-facing "wrong" rate**
+(not just the offline dev-set numbers) before trusting either holds
+outside speechocean762's speaker population - that monitoring is not built
+in this session.
 
 
 Written in response to review feedback on Phase 0, before touching a

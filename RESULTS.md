@@ -4,80 +4,97 @@ Every number below was produced by running the script named next to it -
 none are estimates. Re-run the named script if the underlying cache
 changes and re-paste.
 
-## Phase 5 operating point, corrected: joint sweep, and the answer is not what was expected
+## Phase 5 operating points: two, not one - FRR budget replaced with a precision floor
 
-**Two corrections to the first version of Phase 5** (`eval/phase5_joint_sweep.py`):
-the FRR<=0.05 budget must apply to the AGGREGATED decision (what a child or
-therapist actually sees - a single attempt no longer names anything), not
-the single attempt; and (T_ERROR, k-of-n) must be swept jointly, not
-stacked (pick a safe single-attempt T_ERROR, then bolt k-of-n on top, which
-is what the previous version did).
+**The FRR<=0.05 selection rule itself was wrong at this base rate.** It
+produced a single point (k=1,n=1, T_ERROR=0.20: recall=0.427,
+precision=0.138, FRR=0.0485) with 13.8% precision and 0% abstention -
+naming a specific sound wrong 86% of the time it fires is not a usable
+child-facing decision, and 0% abstention is a design failure, not
+efficiency. Corrected (`eval/phase5_two_points.py`) to two operating
+points for two different consumers, with a precision floor replacing the
+FRR floor for the one that's allowed to speak to the child.
 
-**The joint sweep's answer is not what was expected going in.** The point
-that maximizes aggregated recall subject to aggregated FRR<=0.05 is
-**k=1, n=1 - no corroboration at all - at T_ERROR=0.20**, not a looser
-T_ERROR with 2-of-3 or 3-of-4 doing the work:
+**k-of-n corroboration still doesn't help, confirmed a second way.**
+Checked whether any k-of-n configuration can reach precision>=0.5 at any
+threshold at all (fine grid, step 0.01): **none can** - 2-of-3, 3-of-4,
+2-of-4, and 3-of-5 all top out below 0.5 precision regardless of T_ERROR,
+too data-sparse to support the constraint. Only single-attempt
+thresholding clears it. This is the same dispersion-diagnostic mechanism
+as before (false alarms are speaker-systematic, not independent), showing
+up under a different selection rule - not a fluke of the FRR-budget
+framing specifically.
 
-| configuration | T_ERROR | aggregated recall | aggregated precision | aggregated FRR | n_windows | n_pos |
-|---|---|---|---|---|---|---|
-| **1-of-1 (selected)** | 0.20 | **0.427** | 0.138 | 0.0485 | 16422 | 293 |
-| 2-of-4 (best k>1 under budget) | 0.35 | 0.263 | 0.200 | 0.0060 | 3325 | 19 |
-| 3-of-4 | 0.15 | 0.333 | 0.020 | 0.0151 | 3325 | 3 |
-| 2-of-3 | 0.15 | 0.364 | 0.020 | 0.0404 | 4764 | 11 |
-| current stacked setting (T=0.80, 2-of-3) | 0.80 | **0.000** | undefined | 0.0000 | 4764 | 11 |
+**Correction to a specific number from last turn:** the "2-of-4 at T=0.35"
+point was described as "almost exactly" a precision>=0.5 answer - checked
+directly, its precision is **0.200**, not >=0.5. At matched FRR (~0.006),
+single-attempt thresholding (T=0.46) gives recall=0.167, precision=0.338 -
+2-of-4 has higher recall (0.263) but lower precision (0.200) at that same
+FRR. Neither dominates the other at FRR~0.006; neither clears the
+precision floor either, so neither qualifies as child-facing regardless.
 
-Every k-of-n configuration tested has lower recall than plain
-single-attempt thresholding at the same FRR budget, and the previous
-stacked setting (T_ERROR=0.80 chosen for single-attempt safety, then
-2-of-3 on top) **catches none of the 11 available positive windows** -
-it wasn't a good design, it was actively worse than doing nothing extra.
-
-**Why: this is the direct, predicted consequence of the dispersion
-diagnostic already run** (X²/df=4.31 on GOP z-score's per-speaker false-
-alarm rate - false alarms are speaker-systematic, not independent). k-of-n
-corroboration assumes repeated attempts behave like independent draws;
-when a speaker's false-alarm rate is a persistent trait rather than noise,
-requiring the SAME speaker to cross threshold multiple times doesn't
-separate signal from that speaker's tendency - it can reward a
-consistently-over-flagged speaker's noise as readily as a consistently-
-under-flagged speaker's real errors get missed. The mechanism is real and
-correctly implemented (and a genuine bug was found and fixed while
-rebuilding this - `classify_single_attempt` returned `"candidate_wrong"`,
-which `aggregate_k_of_n` never matched since it counts the literal string
-`"wrong"`; the k-of-n layer was a silent no-op in the previous version),
-but the data says it isn't earning its complexity at the current model's
-performance level.
-
-**Selected operating point, reported in full:**
+### Child-facing point (precision>=0.5 hard constraint, then max recall)
 
 | metric | value |
 |---|---|
-| aggregated recall | 0.427 [95% CI 0.361, 0.483] |
-| aggregated precision | 0.138 [95% CI 0.103, 0.180] |
-| aggregated FRR | 0.0485 [95% CI 0.041, 0.057] |
-| abstain rate | 0.0% (k=1,n=1 - every attempt resolves immediately) |
-| **expected false corrections per 10-word session** | **0.48** |
+| T_ERROR | 0.71 |
+| recall | 0.061 [95% CI 0.019, 0.113] |
+| precision | 0.500 [95% CI 0.235, 0.732] |
+| FRR | 0.0011 [95% CI 0.0005, 0.0018] |
+| abstain band | [T_CORRECT=0.10, T_ERROR=0.71) |
+| **abstain rate** | **13.2%** (2169/16422 child attempts) |
+| **expected false corrections per 10-word session** | **0.011** |
 
-The last number is the one to reason about as a product decision: 0.48
-expected false corrections per 10-word session means, on average, **about
-one false "you got that wrong" every two 10-word sessions** (1/0.48 ≈ 2.1
-sessions) for a child who is, in fact, saying every sound correctly. This
-is the real, concrete cost of the FRR budget at this base rate, and it is
-what "FRR<=0.05" actually feels like in a session rather than an abstract
-rate.
+**This is far more conservative than the initial estimate of "recall
+around 0.25."** That estimate came from misreading the 2-of-4/T=0.35
+point's FRR (0.006) as if it implied similar precision; the actual
+precision>=0.5 constraint, measured directly, caps single-attempt recall
+at 6.1%, not 25%. 0.011 expected false corrections per 10-word session is
+roughly **one false "you got that wrong" every 91 sessions** for a child
+saying everything correctly - much rarer than the superseded point's
+1-per-2-sessions, at the direct cost of catching far fewer real errors per
+session. This is the headline product number: **at the threshold allowed
+to name a specific sound, Echo is right about which sound is wrong half
+the time it speaks, and it rarely speaks.**
 
-**What this means for the design:** k=1,n=1 means every attempt is final -
-there is no "wait for corroboration before naming anything" cushion, which
-was the qualitative design goal two turns ago. The literal optimization
-(max recall subject to the FRR budget, as explicitly specified) does not
-choose that cushion; it chooses raw recall instead. If the "never act on
-one attempt" property matters enough to give up recall for, **2-of-4 at
-T=0.35** (recall 0.263, FRR 0.006, comfortably under budget, real
-corroboration) is the documented alternative in `eval/phase5_joint_sweep.json`.
-Both are implemented correctly in `backend/decision.py`; the constants
-there are currently set to the literal optimum (k=1, n=1, T_ERROR=0.20)
-since that is what the stated selection rule picks, with this tension
-recorded here rather than silently resolved.
+### Therapist-queue point (no precision floor - ranked, not thresholded)
+
+Every attempt's calibrated probability is retained
+(`attempt_history`/`GET /api/therapist/top-k`); recall/precision at top-K
+(pooled child attempts, ranked by probability, 293 true positives total):
+
+| K | recall | precision | true positives caught |
+|---|---|---|---|
+| 10 | 0.024 | 0.700 | 7 |
+| 25 | 0.048 | 0.560 | 14 |
+| 50 | 0.065 | 0.380 | 19 |
+
+Last turn's selected point (T=0.20, recall=0.427, precision=0.138)
+belongs here, not at the child-facing threshold - its 0.48 expected false
+corrections per 10-word session is the right number for a therapist
+reviewing a ranked queue, not for a message shown directly to a child.
+
+### Naming rule (implemented, `backend/decision.py` + `backend/scorer_phase3.py`)
+
+A specific substitution is named only at `status=="wrong"` (p>=0.71). Below
+that but at or above T_CORRECT=0.10, the response is `status=="unclear"` -
+a non-naming nudge ("let's try that one more time"), no claim about which
+sound was wrong. The old k-of-n/`confirmed_status` machinery is removed
+from the live decision path (it never won any comparison run against it,
+at either selection rule) - `backend/aggregation.py` is kept as correct,
+tested infrastructure, unused by default.
+
+**Verification, since the last version's k-of-n layer was found to be a
+silent no-op:** `eval/phase5_joint_sweep.py` and `eval/phase5_two_points.py`
+both compute their k/n counting directly from raw probabilities inline -
+neither imports `backend.decision` or `backend.aggregation` (checked by
+grep, not assumed). `eval/measure_k_of_n.py` does call
+`aggregate_k_of_n`, but on `predict_gop_zscore`'s own status strings,
+which are literally `"wrong"`/`"correct"` (checked in `eval/baselines.py`) -
+not `decision.py`'s former `"candidate_wrong"`. **No number reported last
+turn was measured through the broken path**; the bug only ever affected
+`backend/decision.py`'s live runtime behavior, which is fixed, and the
+now-removed k-of-n layer made the question moot regardless.
 
 ## Within-phoneme evaluation: the real headline, and it does not clear baseline
 

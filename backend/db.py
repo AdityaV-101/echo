@@ -309,6 +309,25 @@ def get_therapist_review_queue(user_id: str | None = None) -> list[dict]:
         return [dict(r) for r in rows]
 
 
+def get_top_k_by_probability(k: int, user_id: str | None = None) -> list[dict]:
+    """Phase 5's therapist-queue point: no precision floor, just a ranking
+    of every recorded attempt by calibrated probability - the caller
+    decides how deep to review (K=10/25/50, see RESULTS.md's recall/
+    precision-at-top-K table). Distinct from therapist_review_queue, which
+    only ever holds "wrong" (child-facing-threshold, nameable) events."""
+    with get_conn() as conn:
+        if user_id:
+            rows = conn.execute(
+                "SELECT * FROM attempt_history WHERE user_id = ? ORDER BY probability DESC LIMIT ?",
+                (user_id, k),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM attempt_history ORDER BY probability DESC LIMIT ?", (k,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+
 def update_current_level(user_id: str, level: int):
     with get_conn() as conn:
         conn.execute("UPDATE users SET current_level = ? WHERE id = ?", (level, user_id))

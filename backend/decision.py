@@ -1,60 +1,42 @@
-"""Phase 5: the operating point, corrected to a joint sweep.
+"""Phase 5: two operating points for two consumers, replacing the
+FRR<=0.05 selection rule (wrong at this base rate - it produced a point
+with 13.8% precision and 0% abstention, not usable as a child-facing
+decision) and the k-of-n corroboration layer (eval/phase5_joint_sweep.py
+and eval/phase5_two_points.py both found no k-of-n configuration beats
+plain single-attempt thresholding at any operating point tested - a direct
+consequence of the dispersion diagnostic in RESULTS.md: false alarms are
+speaker-systematic, not independent, so requiring repeat crossings doesn't
+isolate signal the way k-of-n's independence assumption needs).
 
-eval/phase5_joint_sweep.py fixed two problems with the first version of
-this module:
+1. CHILD-FACING point (T_ERROR, naming-capable): precision>=0.5 is a HARD
+   constraint on the child slice, then maximize recall subject to it.
+   Measured (eval/phase5_two_points.py, single-attempt is the only
+   configuration that clears the floor at all - every k-of-n config
+   tested tops out below 0.5 precision regardless of threshold):
+   T_ERROR=0.71, recall=0.061, precision=0.500, FRR=0.0011. This is far
+   more conservative than a first guess based on a misread FRR (the
+   2-of-4 point in RESULTS.md's superseded table has precision=0.200, not
+   >=0.5 - checked directly, not assumed).
+2. THERAPIST-QUEUE point (no precision floor): every attempt's calibrated
+   probability is retained (backend/db.py's attempt_history); the queue is
+   a ranking query, not a fixed threshold - see db.get_top_k_by_probability
+   and RESULTS.md's recall/precision-at-top-K table. This is where the
+   higher-recall, lower-precision behavior belongs.
 
-1. The FRR<=0.05 budget must apply to the AGGREGATED (what a child/
-   therapist actually sees) decision, not the single attempt - a single
-   attempt no longer names anything on its own, so its own FRR isn't the
-   user-facing quantity.
-2. (T_ERROR, k-of-n) must be swept JOINTLY, not stacked (pick T_ERROR from
-   a single-attempt curve, then bolt k-of-n on top).
+NAMING RULE: a specific substitution/process is only ever named to the
+child when p >= T_ERROR (the child-facing point). Below that but at or
+above T_CORRECT, the response is a non-naming nudge ("let's try that one
+more time") - no claim about which sound was wrong. Naming a substitution
+that's wrong most of the time it fires teaches the wrong thing; at the
+therapist-queue point's ~13.8-56% precision (depending on K), that's
+exactly what would happen if it were child-facing.
 
-The joint sweep's answer is not what was expected going in: the point that
-maximizes AGGREGATED recall subject to AGGREGATED FRR<=0.05 is **k=1, n=1
-(no corroboration at all), T_ERROR=0.20** - not a looser T_ERROR with
-2-of-3 or 3-of-4 doing the work. Every k-of-n configuration tested (2-of-3,
-3-of-4, 2-of-4, 3-of-5) has LOWER recall at FRR<=0.05 than plain
-single-attempt thresholding, and the previous stacked setting
-(T_ERROR=0.80, 2-of-3) has recall=0.000 on the 11 available positive
-windows - it was catching nothing. This is not noise: it's the direct,
-predicted consequence of eval/phase3_multicollinearity.py's ... no, of
-RESULTS.md's dispersion diagnostic (X^2/df=4.31 on GOP z-score's false
-alarms) - false alarms are speaker-systematic, so requiring the SAME
-speaker to cross threshold multiple times doesn't discriminate signal
-from that speaker's persistent tendency the way independence would
-predict; if anything it rewards speakers who are consistently over- or
-under-flagged rather than washing that out.
-
-Bug fixed while rebuilding this: classify_single_attempt previously
-returned "candidate_wrong", which backend/aggregation.py's
-aggregate_k_of_n never matches (it counts the literal string "wrong") -
-the k-of-n layer was silently a no-op in the first version of this module.
-Fixed by using "wrong" as the stored/compared value; moot for the k=1,n=1
-operating point (aggregation is bypassed either way) but real for anyone
-using aggregation.py directly at k>1.
-
-T_ERROR=0.20, T_CORRECT=0.10: at T_ERROR=0.20, aggregated (=single-attempt,
-since n=1) FRR=0.0485, recall=0.427, precision=0.138 (measured on pooled
-child speakers' out-of-fold scores - eval/phase5_joint_sweep.json).
-T_CORRECT is a UX-only cut below T_ERROR (doesn't affect the measured
-safety numbers, which depend only on the T_ERROR cut) - kept low so most
-attempts read as confidently "correct" rather than "unclear", consistent
-with the low base rate.
-
-Precision at this point (13.8%) is low - most flags are false alarms, an
-unavoidable consequence of a ~1.8% base rate (see RESULTS.md's precision-
-ceiling section), not a defect of this operating point specifically. What
-FRR<=0.05 guarantees is that a truly-correct child is rarely told they're
-wrong (<5% of the time) - it does not guarantee that a flag, when it
-fires, is usually right. A k=2,n=4 alternative (T=0.35: recall=0.263,
-FRR=0.006, comfortably under budget) is available in
-eval/phase5_joint_sweep.json for anyone who wants SOME corroboration
-before ever queuing a case, at a real recall cost - not used as the
-default here because the explicit selection rule (max recall subject to
-the FRR budget) does not choose it, but recorded because reasonable people
-could prefer it for the "never act on one attempt" property k=1,n=1 gives
-up.
+T_CORRECT=0.10 sets the abstain band's lower edge - a policy choice (UX,
+not a safety measurement), giving a measured 13.2% abstain rate (attempts
+in [0.10, 0.71)) on the child dev population. An abstain rate of 0%, which
+the previous FRR-budget point produced, is a design failure, not
+efficiency - every attempt resolving immediately means no room for "I'm
+not sure yet."
 """
 import json
 from dataclasses import dataclass
@@ -64,7 +46,6 @@ import joblib
 import numpy as np
 
 import db
-from aggregation import aggregate_k_of_n
 from child_calibration import RELATIVE_FEATURES, speaker_relative_features, update_baselines
 from features import PositionFeatures, WordFeatures
 
@@ -75,9 +56,7 @@ _ENCODER = None
 _METADATA = None
 
 T_CORRECT = 0.10
-T_ERROR = 0.20
-K_OF_N = 1
-N_WINDOW = 1
+T_ERROR = 0.71  # child-facing, naming-capable threshold - precision=0.500 at this point
 
 
 def _load():
@@ -93,13 +72,10 @@ def _load():
 
 @dataclass
 class AttemptDecision:
-    single_status: str  # "correct" | "wrong" | "unclear"
+    status: str  # "correct" | "unclear" | "wrong"
     probability: float
     phoneme: str
-    heard: str | None
-    confirmed_status: str  # "correct" | "pending_review" | "confirmed_error"
-    window_size: int
-    n_wrong_in_window: int
+    heard: str | None  # only ever set when status == "wrong" - the naming rule
 
 
 def _raw_relative_inputs(pos: PositionFeatures) -> dict[str, float]:
@@ -141,7 +117,7 @@ def compute_error_probability(pos: PositionFeatures, word: WordFeatures, user_id
     return p, relative
 
 
-def classify_single_attempt(p: float) -> str:
+def classify(p: float) -> str:
     if p < T_CORRECT:
         return "correct"
     if p >= T_ERROR:
@@ -150,44 +126,20 @@ def classify_single_attempt(p: float) -> str:
 
 
 def decide(pos: PositionFeatures, word: WordFeatures, user_id: str) -> AttemptDecision:
-    """Full Phase 5 decision for one target-phoneme attempt: single-attempt
-    call, k-of-n corroboration against this user's recent history at this
-    phoneme (a no-op at the current K_OF_N=1/N_WINDOW=1 operating point -
-    see module docstring for why - but left in place, correctly wired
-    against aggregation.py's actual vocabulary, for anyone who switches to
-    a k>1 configuration), and therapist-queue escalation on a fresh
-    confirmation."""
+    """Single-attempt decision at the child-facing operating point. Every
+    attempt (regardless of status) is recorded to attempt_history with its
+    probability - that history is the therapist-queue's ranking source
+    (db.get_top_k_by_probability), independent of this function's verdict."""
     p, relative = compute_error_probability(pos, word, user_id)
-    single_status = classify_single_attempt(p)
-    # The specific substituted phone (if any) comes from llr_scorer's winning
-    # candidate at this position, not from PositionFeatures - the caller
-    # (main.py's /api/score handler) already has that candidate and attaches
-    # it to the API response; this module only produces the verdict.
-    heard = pos.llr_best_origin if single_status == "wrong" and pos.llr_best_origin != "canonical" else None
+    status = classify(p)
+    # Naming rule: heard is only ever populated for "wrong" - never for
+    # "unclear", which must stay a non-naming nudge.
+    heard = pos.llr_best_origin if status == "wrong" and pos.llr_best_origin != "canonical" else None
 
-    # Fetch the previous window BEFORE recording this attempt, so we can
-    # tell whether this attempt is what newly tips the aggregate into
-    # "wrong" (queue once, on the transition) versus an already-confirmed
-    # run continuing to say "wrong" (never re-queue the same confirmation).
-    previous_history = db.get_recent_attempt_history(user_id, pos.expected, N_WINDOW)
-    previous_agg = aggregate_k_of_n([h["status"] for h in previous_history], K_OF_N)
-
-    db.record_attempt_history(user_id, pos.expected, single_status, p)
+    db.record_attempt_history(user_id, pos.expected, status, p)
     update_baselines(user_id, pos.expected, _raw_relative_inputs(pos))
 
-    history = db.get_recent_attempt_history(user_id, pos.expected, N_WINDOW)
-    agg = aggregate_k_of_n([h["status"] for h in history], K_OF_N)
+    if status == "wrong":
+        db.add_to_therapist_review_queue(user_id, pos.expected, n_wrong=1, n_window=1, mean_probability=p)
 
-    confirmed_status = "correct"
-    if agg.status == "wrong":
-        confirmed_status = "confirmed_error"
-        if previous_agg.status != "wrong":
-            mean_p = sum(h["probability"] for h in history) / len(history)
-            db.add_to_therapist_review_queue(user_id, pos.expected, agg.n_wrong, agg.n_total, mean_p)
-    elif agg.status == "unclear":
-        confirmed_status = "pending_review"
-
-    return AttemptDecision(
-        single_status=single_status, probability=p, phoneme=pos.expected, heard=heard,
-        confirmed_status=confirmed_status, window_size=agg.n_total, n_wrong_in_window=agg.n_wrong,
-    )
+    return AttemptDecision(status=status, probability=p, phoneme=pos.expected, heard=heard)

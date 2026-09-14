@@ -1,7 +1,7 @@
 """Production entry point for the Phase 1-5 rebuild pipeline: paired LLR +
 GOP/entropy features (backend/features.py) -> frozen classifier
 (backend/decision.py) -> Phase 4's usable-recording gate
-(backend/recording_gate.py) -> Phase 5's abstention-heavy k-of-n decision.
+(backend/recording_gate.py) -> Phase 5's two-operating-point decision.
 
 Same score_word(...) signature as scorer.py/scorer_stub.py so main.py can
 select this path the same way it already selects between those two (see
@@ -10,6 +10,13 @@ needs to change to wire this in.
 
 Per eval/phase3_protocol.md's modeling freeze: this module consumes the
 frozen model/thresholds, it does not tune anything.
+
+NAMING RULE (decision.py's docstring has the full derivation): a specific
+substitution is only ever named when decision.decide() returns
+status="wrong" (the child-facing, precision>=0.5 operating point,
+T_ERROR=0.71). "unclear" is a non-naming nudge - no claim about which
+sound was wrong, because at any lower threshold the claim would be wrong
+most of the time it fired.
 """
 import logging
 
@@ -24,16 +31,17 @@ from scorer_common import canonical_phonemes_for_word
 logger = logging.getLogger("speechpal.scorer_phase3")
 
 
-def _generate_feedback(word: str, confirmed_status: str, phoneme: str | None) -> str:
-    """Per Phase 8's product rule (Prompt 1): single-attempt feedback stays
-    encouraging and non-committal. A specific error is only ever named once
-    k-of-n has confirmed it - never off one attempt."""
-    if confirmed_status == "correct":
+def _generate_feedback(word: str, status: str, phoneme: str | None) -> str:
+    """Per Phase 8's product rule (Prompt 1) and the naming rule above:
+    "unclear" never names a sound, even though the model's raw score
+    crossed some threshold to get there - only "wrong" (precision=0.500 at
+    this operating point) does."""
+    if status == "correct":
         return f"Nice work on \"{word}\"!"
-    if confirmed_status == "pending_review":
-        return f"Good try on \"{word}\" - let's practice that one a bit more."
-    # confirmed_status == "confirmed_error": corroborated across multiple attempts
-    return f"Let's work on the {phoneme} sound together - your therapist will follow up on \"{word}\"."
+    if status == "unclear":
+        return f"Good try on \"{word}\" - let's try that one more time."
+    # status == "wrong": the only status allowed to name a specific sound
+    return f"So close! Let's practice the {phoneme} sound in \"{word}\"."
 
 
 def score_word(
@@ -80,37 +88,26 @@ def score_word(
 
     pos = word_features.positions[target_index]
     result = decision.decide(pos, word_features, user_id)
-
-    # Single-attempt status maps to the API's "wrong" only via k-of-n
-    # confirmation - see main.py's DB bookkeeping, which should key off
-    # confirmed_status, not single_status, for anything user-visible.
-    feedback = _generate_feedback(word, result.confirmed_status, target_phoneme)
+    feedback = _generate_feedback(word, result.status, target_phoneme)
 
     # main.py's phoneme-error-count/recommendation-card logic keys off
-    # results[i]["status"] == "wrong", and db.record_attempt requires a
-    # non-null integer percent_correct - both predate this scorer. Rather
-    # than change that shared logic mid-migration, results[i]["status"]
-    # carries the CONFIRMED (k-of-n corroborated) status in the old
-    # three-way vocabulary (correct/unclear/wrong), so the recommendation
-    # card only fires on a corroborated error, never a single tentative
-    # attempt - which is the intended semantics, not a workaround.
-    # single_attempt_status (top level) carries the true single-attempt
-    # call for anything that needs it (therapist panel).
-    status_in_old_vocabulary = {"correct": "correct", "pending_review": "unclear", "confirmed_error": "wrong"}[result.confirmed_status]
-    percent_correct = {"correct": 100, "pending_review": 50, "confirmed_error": 0}[result.confirmed_status]
+    # results[i]["status"] == "wrong" and db.record_attempt requires a
+    # non-null integer percent_correct - both predate this scorer, kept
+    # compatible rather than changed mid-migration. "wrong" here IS the
+    # child-facing, precision>=0.5 threshold - not a lower-confidence flag,
+    # so firing the recommendation card on it is the intended semantics.
+    percent_correct = {"correct": 100, "unclear": 50, "wrong": 0}[result.status]
 
     return {
         "word": word, "canonical": canonical, "target_phoneme": target_phoneme,
-        "status": result.confirmed_status,  # "correct" | "pending_review" | "confirmed_error"
-        "single_attempt_status": result.single_status,  # "correct" | "wrong" | "unclear" - therapist-panel detail only, never child-facing
+        "status": result.status,  # "correct" | "unclear" | "wrong" - see decision.py's naming rule
         "probability": round(result.probability, 4),
-        "heard": result.heard,
-        "window": {"n_wrong": result.n_wrong_in_window, "n_total": result.window_size},
+        "heard": result.heard,  # only ever set when status == "wrong"
         "percent_correct": percent_correct,
         "results": [{
             "index": target_index, "expected": target_phoneme,
-            "status": status_in_old_vocabulary, "heard": result.heard, "probability": round(result.probability, 4),
+            "status": result.status, "heard": result.heard, "probability": round(result.probability, 4),
         }],
-        "worst_phoneme": target_phoneme if result.confirmed_status != "correct" else None,
+        "worst_phoneme": target_phoneme if result.status != "correct" else None,
         "feedback": feedback,
     }

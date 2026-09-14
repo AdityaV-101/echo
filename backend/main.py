@@ -198,9 +198,19 @@ def advance_level(level: int, payload: dict):
 
 @app.get("/api/therapist/review-queue")
 def therapist_review_queue(user_id: str | None = None):
-    """Phase 5: k-of-n corroborated errors only - a single tentative
-    attempt never appears here. See backend/decision.py."""
+    """Phase 5's CHILD-FACING-threshold events only (status="wrong",
+    precision=0.500 at that operating point) - see backend/decision.py."""
     return db.get_therapist_review_queue(user_id)
+
+
+@app.get("/api/therapist/top-k")
+def therapist_top_k(k: int = 25, user_id: str | None = None):
+    """Phase 5's THERAPIST-QUEUE operating point: no precision floor, every
+    recorded attempt ranked by calibrated probability - a broader, lower-
+    precision review list than /review-queue's child-facing-threshold
+    events. See RESULTS.md's recall/precision-at-top-K table for what a
+    given K actually catches."""
+    return db.get_top_k_by_probability(k, user_id)
 
 
 @app.get("/api/phoneme-lookup")
