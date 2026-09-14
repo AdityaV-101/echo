@@ -282,13 +282,22 @@ input {
   border-color: var(--color-primary);
 }
 
-/* --- Map scenery (Home) --- */
+/* --- Map scenery (Home) ---
+   Sized to the map's full scroll height (not `position: fixed`, which only
+   ever covers one screenful) so the backdrop never runs out partway down a
+   long level path - see MapScenery.jsx for why. */
 .map-scenery {
-  position: fixed;
+  position: absolute;
   inset: 0;
+  min-height: 100%;
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
+}
+.map-ground-gradient {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
 }
 .map-sun {
   position: absolute;
@@ -318,64 +327,35 @@ input {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50% { transform: translateX(-50%) translateY(10px); }
 }
-.map-hills {
-  position: absolute;
-  left: -10%;
-  width: 120%;
-  height: 160px;
-}
-.map-hills-far {
-  bottom: 20px;
-  height: 180px;
-  opacity: 0.55;
-  animation: mapHillsDrift 28s ease-in-out infinite;
-}
-.map-hills-back {
-  bottom: -10px;
-  opacity: 0.75;
-  animation: mapHillsDrift 22s ease-in-out infinite;
-}
-.map-hills-front {
-  bottom: -20px;
-  height: 130px;
-  animation: mapHillsDrift 15s ease-in-out infinite reverse;
-}
-@keyframes mapHillsDrift {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(3%); }
-}
 .map-cloud {
   position: absolute;
   font-size: 34px;
-  opacity: 0.6;
+  color: #fff;
+  opacity: 0.75;
   animation: mapCloudDrift linear infinite;
 }
-.map-cloud-1 { top: 6%; left: -10%; font-size: 30px; animation-duration: 40s; }
-.map-cloud-2 { top: 34%; left: -10%; font-size: 22px; animation-duration: 55s; animation-delay: -18s; }
-.map-cloud-3 { top: 48%; left: -10%; font-size: 26px; animation-duration: 48s; animation-delay: -30s; }
+.map-cloud-1 { top: 4%; left: -10%; font-size: 30px; animation-duration: 40s; }
+.map-cloud-2 { top: 16%; left: -10%; font-size: 22px; animation-duration: 55s; animation-delay: -18s; }
+.map-cloud-3 { top: 30%; left: -10%; font-size: 26px; animation-duration: 48s; animation-delay: -30s; }
+.map-cloud-4 { top: 48%; left: -10%; font-size: 24px; animation-duration: 50s; animation-delay: -10s; }
+.map-cloud-5 { top: 66%; left: -10%; font-size: 28px; animation-duration: 44s; animation-delay: -24s; }
 @keyframes mapCloudDrift {
   from { transform: translateX(0); }
   to { transform: translateX(130vw); }
-}
-.map-trees {
-  position: absolute;
-  left: -10%;
-  width: 120%;
-  bottom: -8px;
-  height: 150px;
-  opacity: 0.92;
 }
 
 .map-bird {
   position: absolute;
   font-size: 20px;
-  opacity: 0.6;
+  color: #6b5744;
+  opacity: 0.7;
   animation: mapBirdFly 18s linear infinite;
 }
-.map-bird-1 { top: 14%; animation-duration: 20s; }
-.map-bird-2 { top: 26%; animation-duration: 26s; animation-delay: -8s; }
-.map-bird-3 { top: 40%; font-size: 18px; animation-duration: 23s; animation-delay: -12s; }
-.map-bird-4 { top: 32%; font-size: 16px; animation-duration: 16s; animation-delay: -4s; }
+.map-bird-1 { top: 10%; animation-duration: 20s; }
+.map-bird-2 { top: 22%; animation-duration: 26s; animation-delay: -8s; }
+.map-bird-3 { top: 38%; font-size: 20px; animation-duration: 23s; animation-delay: -12s; }
+.map-bird-4 { top: 54%; font-size: 18px; animation-duration: 16s; animation-delay: -4s; }
+.map-bird-5 { top: 72%; font-size: 20px; animation-duration: 27s; animation-delay: -6s; }
 @keyframes mapBirdFly {
   0% { transform: translateX(-10vw) translateY(0); }
   50% { transform: translateX(55vw) translateY(-14px); }
@@ -384,13 +364,14 @@ input {
 
 .map-critter {
   position: absolute;
-  font-size: 26px;
-  opacity: 0.85;
+  font-size: 30px;
+  opacity: 0.9;
   animation: critterBob ease-in-out infinite;
 }
-.map-critter-1 { bottom: 14%; left: 9%; animation-duration: 5s; }
-.map-critter-2 { bottom: 10%; left: 80%; font-size: 24px; animation-duration: 6s; animation-delay: -2s; }
-.map-critter-3 { bottom: 17%; left: 46%; font-size: 22px; animation-duration: 5.5s; animation-delay: -1s; animation-name: critterBobFlipped; }
+.map-critter-1 { top: 20%; left: 9%; animation-duration: 5s; }
+.map-critter-2 { top: 42%; left: 84%; font-size: 26px; animation-duration: 6s; animation-delay: -2s; }
+.map-critter-3 { top: 62%; left: 8%; font-size: 28px; animation-duration: 5.5s; animation-delay: -1s; animation-name: critterBobFlipped; }
+.map-critter-4 { top: 80%; left: 82%; font-size: 24px; animation-duration: 5.2s; animation-delay: -3s; }
 @keyframes critterBob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
@@ -422,14 +403,17 @@ input {
 /* --- Home --- */
 .home-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 10px 16px;
   margin-bottom: 20px;
 }
 .home-header-left {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 .home-greeting {
   font-family: var(--font-heading);
@@ -442,6 +426,7 @@ input {
 }
 .home-header-right {
   display: flex;
+  flex-shrink: 0;
   gap: 10px;
 }
 
@@ -560,6 +545,42 @@ input {
   max-width: 140px;
   margin-left: 16px !important;
   font-weight: 600;
+}
+.level-path-name--locked {
+  color: var(--color-text-faint, #b3ada3);
+}
+
+.level-bubble--locked {
+  background: #cfc8bd;
+  box-shadow: 0 5px 0 #a89f92;
+  cursor: not-allowed;
+}
+.level-bubble--locked:active {
+  transform: none;
+  box-shadow: 0 5px 0 #a89f92;
+}
+
+.world-section {
+  position: relative;
+  z-index: 1;
+}
+.world-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 8px auto 4px;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: var(--color-card);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--color-text);
+}
+.world-banner-icon {
+  font-size: 18px;
 }
 
 /* --- Speech mode master switch --- */
@@ -1392,6 +1413,14 @@ input {
     width: 58px;
     height: 58px;
     font-size: 22px;
+  }
+  /* At a high trail offset (PATH_OFFSETS up to 75%) the bubble alone
+     already fills most of a narrow row's width, leaving too little room
+     for a label beside it without pushing past the viewport edge - the
+     level name is still available via the bubble's title tooltip and
+     inside the level itself, so it's hidden rather than clipped/overflowing. */
+  .level-path-name {
+    display: none;
   }
 }
 

@@ -171,3 +171,84 @@ Not yet verified in this pass: the `MAX_WRONG_RETRIES` (3) and
 `MAX_UNCLEAR_IN_ROW` (2) auto-advance behavior over a full multi-attempt
 sequence, and the settings panel's open/closed visual state - both are
 implemented but only exercised via code read, not screenshotted.
+
+## Part 6: Home map
+
+Screenshotted Home directly (`mock-server/screenshot_home.mjs`) for the
+first time this run - it had only been passed through on the way into
+practice before, never actually reviewed on its own - and found the three
+bugs the brief named, plus two more real ones caught by testing at mobile
+width, which nothing up to this point had done for this specific screen.
+
+**Greeting bug: could not reproduce as described.** `Hi, {user?.id}!`
+rendered correctly ("Hi, Jamie!") in every screenshot, including a fresh
+page load with only a `localStorage`-seeded user id and no prior session -
+`App.jsx` already gates on `loading` before rendering `Home`, and `user` is
+set in the same state-update pass that clears `loading`, so there's no
+render frame where `user` is set but empty. Logged as not reproduced rather
+than silently "fixed" - if this still shows up against the real backend, it
+points at that fetch path specifically, not this component.
+
+**MapScenery not covering full height: real bug, root cause confirmed.**
+`.map-scenery` was `position: fixed; inset: 0` - which pins a layer to the
+current viewport rectangle, not the page's actual scrollable height. A
+15-level path is far taller than one screen, so the sun/rainbow/hills only
+ever rendered in the first ~900px and everything below level 5 or so sat on
+bare white. Fixed by making it `position: absolute` sized to the full
+height of `.screen-home` (already `position: relative`) instead of the
+viewport, and rebuilding the ground as one continuous vertical gradient
+(not viewport-anchored hill art) so it scales to any number of levels.
+
+**Level nodes not showing state: real bug, also now fixed.** Every
+not-completed, not-current level (2 through 15) rendered as an identical
+solid-orange numbered circle - there was no notion of "locked" at all, only
+completed vs. not. Added a `locked` state (`lvl.level > currentLevel &&
+!completed`) with a distinct muted-gray bubble, a padlock icon in place of
+the level number, and a disabled/non-clickable button - so "the level right
+after where you are" and "a level 14 steps away" finally look different,
+and locked levels can't be jumped to out of order.
+
+**Redesigned into worlds**, addressing the brief's "4-5 themed worlds" and
+solving the height problem at the same time rather than as two unrelated
+patches: the path is chaptered every 5 levels into a named world (Meadow
+Trail / Forest Path / Mountain Peak / Cloud Kingdom / Starlight Bay, cycling
+if there are more), each with its own banner divider and its own
+independently-sized trail SVG (so a banner's height never desyncs the
+dashed trail from the bubble positions - the two are computed separately
+per world section instead of one global calculation). The ground gradient
+shifts tone per world. This is intentionally a light version: the actual
+Jungle/Space/Ocean/Candy palette *system* as CSS custom properties is
+Part 7's job, and these world sections are the seam it hooks into, not a
+finished theme.
+
+**Deleted the emoji decoration system in MapScenery specifically** (clouds,
+birds, butterflies, bees, squirrel/rabbit/fox critters) and replaced every
+one with an authored inline SVG shape, matching the brief's instruction.
+Scope note, stated plainly: `FloatingDecor` and `Doodles` (used on Login,
+Practice, and layered on Home too) are a separate, more broadly-shared
+emoji-based decoration system and were deliberately left alone this pass -
+replacing those is a larger, riskier change spanning every screen, better
+suited to Part 7's "visual language" pass than bundled into a Home-specific
+bug-fix part. Small functional icon-labels elsewhere (the level sticker
+emoji, the world banner icon, the 🚩 current-level flag, the 🎤/🔥 icons
+used in Practice) were also kept, consistent with how the rest of the app
+already uses emoji as compact icons rather than ambient decoration.
+
+**Two bugs caught only by testing at 390px, not visible at desktop width:**
+1. `.home-header` (greeting + mascot vs. the speech-toggle/practice/
+   therapist icon buttons) had no `flex-wrap`, so at 390px the right-hand
+   button group ran 50px past the viewport edge - real, silent horizontal
+   overflow, never caught because every prior screenshot of this session
+   was either desktop-width or of a different screen. Fixed by wrapping
+   the header and giving the button group `flex-shrink: 0` so it drops to
+   its own row instead of overflowing.
+2. Smaller residual overflow: `.level-path-name` labels at a high trail
+   offset (up to 75% of row width) had too little room left beside the
+   bubble on a narrow screen regardless of their own max-width, since the
+   bubble alone already consumed most of the row. Rather than fight the
+   trail's horizontal offset system on mobile, the labels are hidden below
+   480px - the level name is still reachable via the bubble's title
+   tooltip and is shown prominently once a level is actually opened.
+   Verified `document.documentElement.scrollWidth === innerWidth` (no
+   horizontal scroll at all) at both 390px and the brief's stated 360px
+   minimum, for both Home and Practice.

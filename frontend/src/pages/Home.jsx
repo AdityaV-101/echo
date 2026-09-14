@@ -12,6 +12,13 @@ const PATH_OFFSETS = [15, 45, 75, 60, 30, 10, 40, 70];
 // instead of a bare row of numbers. Purely decorative.
 const LEVEL_EMOJIS = ["👩", "🐶", "🎈", "🔑", "🐸", "🚐", "🦁", "☀️", "🐝", "🐚", "🌹", "🐻", "👍", "⭐", "🌈"];
 
+// The path is chaptered into named "worlds" every WORLD_SIZE levels - both
+// a wayfinding aid on a long path (15+ levels) and the visual seam
+// MapScenery's ground-color bands and Part 7's themes key off of.
+const WORLD_SIZE = 5;
+const WORLD_NAMES = ["Meadow Trail", "Forest Path", "Mountain Peak", "Cloud Kingdom", "Starlight Bay"];
+const WORLD_ICONS = ["🌼", "🌲", "⛰️", "☁️", "✨"];
+
 // Height (in the SVG's own units, one "row" per level) each level occupies.
 // Matches --level-row-height in index.css so the trail threads exactly
 // through each bubble's center regardless of how many levels there are.
@@ -41,11 +48,23 @@ export default function Home({ onSelectLevel, onOpenPracticeTracks, onOpenTherap
     saveSettings(!!user?.speak_aloud, user?.speech_rate ?? 0.8, value).catch(() => {});
   };
   const trailOffsets = levels.map((_, i) => PATH_OFFSETS[i % PATH_OFFSETS.length]);
-  const trailPath = buildTrailPath(trailOffsets);
+  const worldCount = Math.max(1, Math.ceil(levels.length / WORLD_SIZE));
+
+  // Chapter the path into per-world sections, each with its OWN trail SVG
+  // scoped to just that world's rows. A single global trail synced to
+  // `levels.length * ROW_UNIT` would drift out of alignment with the
+  // bubbles as soon as a world-banner divider added height the trail math
+  // didn't know about - per-world sections sidestep that entirely.
+  const worldGroups = [];
+  for (let i = 0; i < levels.length; i += WORLD_SIZE) {
+    const chunkLevels = levels.slice(i, i + WORLD_SIZE);
+    const chunkOffsets = trailOffsets.slice(i, i + WORLD_SIZE);
+    worldGroups.push({ startIndex: i, levels: chunkLevels, trailPath: buildTrailPath(chunkOffsets) });
+  }
 
   return (
     <div className="screen screen-home">
-      <MapScenery />
+      <MapScenery worldCount={worldCount} />
       <FloatingDecor variant="home" />
       <Doodles variant="home" />
       <header className="home-header">
@@ -97,48 +116,71 @@ export default function Home({ onSelectLevel, onOpenPracticeTracks, onOpenTherap
         </div>
       )}
 
-      <div className="level-path" style={{ "--level-count": levels.length }}>
-        <svg
-          className="level-trail"
-          viewBox={`0 0 100 ${levels.length * ROW_UNIT}`}
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <path className="level-trail-path" d={trailPath} />
-        </svg>
-        {levels.map((lvl, i) => {
-          const progress = levelProgress[String(lvl.level)];
-          const completed = progress?.completed === 1;
-          const isCurrent = lvl.level === currentLevel;
-          const offset = trailOffsets[i];
-          return (
-            <div key={lvl.level} className="level-path-row">
-              <button
-                type="button"
-                className={`level-bubble ${completed ? "level-bubble--completed" : ""} ${isCurrent ? "level-bubble--current" : ""}`}
-                style={{ marginLeft: `${offset}%` }}
-                onClick={() => onSelectLevel(lvl.level)}
-                title={lvl.name}
-              >
-                {isCurrent && <span className="level-bubble-flag">🚩</span>}
-                <span className="level-bubble-sticker">{LEVEL_EMOJIS[i % LEVEL_EMOJIS.length]}</span>
-                {completed ? (
-                  <svg viewBox="0 0 24 24" width="26" height="26" fill="gold" stroke="#c9930a" strokeWidth="1">
-                    <path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.2 21 12 17.5 5.8 21 7 14.14 2 9.27l7.1-1.01L12 2z" />
-                  </svg>
-                ) : (
-                  lvl.level
-                )}
-              </button>
-              {!completed && (
-                <span className="level-path-name" style={{ marginLeft: `${offset}%` }}>
-                  {lvl.name}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {worldGroups.map((group, gi) => (
+        <section key={gi} className="world-section">
+          <div className="world-banner">
+            <span className="world-banner-icon">{WORLD_ICONS[gi % WORLD_ICONS.length]}</span>
+            <span className="world-banner-name">{WORLD_NAMES[gi % WORLD_NAMES.length]}</span>
+          </div>
+          <div className="level-path" style={{ "--level-count": group.levels.length }}>
+            <svg
+              className="level-trail"
+              viewBox={`0 0 100 ${group.levels.length * ROW_UNIT}`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path className="level-trail-path" d={group.trailPath} />
+            </svg>
+            {group.levels.map((lvl, gi2) => {
+              const i = group.startIndex + gi2;
+              const progress = levelProgress[String(lvl.level)];
+              const completed = progress?.completed === 1;
+              const isCurrent = lvl.level === currentLevel;
+              // A level is locked until the path has actually reached it -
+              // it hasn't been completed AND it's further along than the
+              // level the child is currently on. Without this every
+              // not-yet-completed level (2 through the very last one)
+              // rendered identically, with no way to tell "next up" from
+              // "14 levels away."
+              const locked = !completed && lvl.level > currentLevel;
+              const offset = trailOffsets[i];
+              return (
+                <div key={lvl.level} className="level-path-row">
+                  <button
+                    type="button"
+                    className={`level-bubble ${completed ? "level-bubble--completed" : ""} ${isCurrent ? "level-bubble--current" : ""} ${locked ? "level-bubble--locked" : ""}`}
+                    style={{ marginLeft: `${offset}%` }}
+                    onClick={() => !locked && onSelectLevel(lvl.level)}
+                    disabled={locked}
+                    aria-disabled={locked}
+                    title={locked ? "Locked - finish earlier levels first" : lvl.name}
+                  >
+                    {isCurrent && <span className="level-bubble-flag">🚩</span>}
+                    {!locked && <span className="level-bubble-sticker">{LEVEL_EMOJIS[i % LEVEL_EMOJIS.length]}</span>}
+                    {locked ? (
+                      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="2">
+                        <rect x="5" y="11" width="14" height="10" rx="2" />
+                        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                      </svg>
+                    ) : completed ? (
+                      <svg viewBox="0 0 24 24" width="26" height="26" fill="gold" stroke="#c9930a" strokeWidth="1">
+                        <path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.2 21 12 17.5 5.8 21 7 14.14 2 9.27l7.1-1.01L12 2z" />
+                      </svg>
+                    ) : (
+                      lvl.level
+                    )}
+                  </button>
+                  {!completed && (
+                    <span className={`level-path-name ${locked ? "level-path-name--locked" : ""}`} style={{ marginLeft: `${offset}%` }}>
+                      {lvl.name}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
 
       <button className="logout-link" onClick={logout}>
         Not you? Switch user

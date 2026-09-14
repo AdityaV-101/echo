@@ -1,8 +1,17 @@
-// A living, colorful scenic backdrop for the level map: sun, a rainbow,
-// three tinted hill layers for depth, a tree line, drifting clouds and
-// birds, a couple of critters peeking out of the grass, and a steady rise
-// of colorful sparkles. Fixed behind the level path so the map reads as a
-// world to walk through instead of a bare list of circles.
+// A living, colorful scenic backdrop for the level map: sun, a rainbow, a
+// sky-to-ground gradient, hand-drawn SVG clouds/birds/critters (no emoji -
+// every shape here is an authored <svg>, not a font glyph), and a steady
+// rise of colorful sparkles.
+//
+// The map path can be far taller than one viewport (each level is a fixed
+// row height, and there can be 15+ levels), so this backdrop is sized to
+// the FULL scroll height of the map, not the viewport - a `position: fixed`
+// backdrop only ever covers the first screenful, which is exactly the "map
+// scenery doesn't cover the full page" bug this replaces. `worldCount`
+// horizon bands are spaced evenly down that full height, each shifting the
+// ground tone a little (meadow -> forest -> highland) so the map reads as
+// a real journey through changing terrain, not one static screenful
+// repeated - this is also the visual seam Part 7's themed worlds hook into.
 const SPARKLES = [
   { left: "8%", size: 10, color: "#ff8a3d", duration: 9, delay: 0 },
   { left: "18%", size: 7, color: "#22c9b8", duration: 7, delay: 1.5 },
@@ -15,44 +24,107 @@ const SPARKLES = [
   { left: "95%", size: 8, color: "#ffb84d", duration: 10.5, delay: 3.5 },
 ];
 
-// Trees sit on a shared ground line (y=140 in the tree layer's own
-// viewBox) so mixing pine and round canopies still reads as one tree line.
-const TREES = [
-  { x: 22, scale: 0.8, type: "pine", tone: "#8fd6a8" },
-  { x: 60, scale: 1.05, type: "round", tone: "#5fb87e" },
-  { x: 105, scale: 0.7, type: "pine", tone: "#79c996" },
-  { x: 200, scale: 0.65, type: "round", tone: "#8fd6a8" },
-  { x: 245, scale: 1.0, type: "pine", tone: "#5fb87e" },
-  { x: 300, scale: 0.75, type: "round", tone: "#79c996" },
-  { x: 345, scale: 0.9, type: "pine", tone: "#8fd6a8" },
-  { x: 385, scale: 0.6, type: "pine", tone: "#5fb87e" },
-];
+const GROUND_TONES = ["#ffd08f", "#a9e0b4", "#8fe0d3", "#c9c2f0", "#ffb8d4"];
 
-function PineTree() {
+function CloudShape() {
   return (
-    <>
-      <path d="M-26 0 L0 -40 L26 0 Z" />
-      <path d="M-20 -22 L0 -58 L20 -22 Z" />
-      <path d="M-14 -42 L0 -78 L14 -42 Z" />
-      <rect x="-4" y="0" width="8" height="14" fill="#a9773f" />
-    </>
+    <svg viewBox="0 0 64 36" width="1em" height="1em" fill="currentColor">
+      <ellipse cx="18" cy="22" rx="16" ry="12" />
+      <ellipse cx="34" cy="14" rx="18" ry="14" />
+      <ellipse cx="50" cy="22" rx="14" ry="11" />
+      <rect x="10" y="20" width="44" height="12" rx="6" />
+    </svg>
   );
 }
 
-function RoundTree() {
+function BirdShape() {
   return (
-    <>
-      <circle cx="-14" cy="-38" r="19" />
-      <circle cx="14" cy="-38" r="19" />
-      <circle cx="0" cy="-54" r="21" />
-      <rect x="-4" y="0" width="8" height="16" fill="#a9773f" />
-    </>
+    <svg viewBox="0 0 40 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round">
+      <path d="M2 16 Q11 4 20 14 Q29 4 38 16" />
+    </svg>
   );
 }
 
-export default function MapScenery() {
+function ButterflyShape() {
+  return (
+    <svg viewBox="0 0 40 32" width="1em" height="1em">
+      <ellipse cx="12" cy="12" rx="10" ry="9" fill="#ff9dc7" />
+      <ellipse cx="12" cy="23" rx="8" ry="7" fill="#8b6ff0" />
+      <ellipse cx="28" cy="12" rx="10" ry="9" fill="#ff9dc7" />
+      <ellipse cx="28" cy="23" rx="8" ry="7" fill="#8b6ff0" />
+      <rect x="18" y="6" width="4" height="22" rx="2" fill="#4a3f6b" />
+    </svg>
+  );
+}
+
+function BeeShape() {
+  return (
+    <svg viewBox="0 0 36 26" width="1em" height="1em">
+      <ellipse cx="12" cy="13" rx="7" ry="6" fill="#fff" opacity="0.7" />
+      <ellipse cx="18" cy="13" rx="7" ry="6" fill="#fff" opacity="0.7" />
+      <ellipse cx="22" cy="13" rx="12" ry="9" fill="#ffd23f" />
+      <path d="M12 6 L14 20 M18 5 L20 21 M24 6 L26 20" stroke="#2b2b2b" strokeWidth="2.5" />
+    </svg>
+  );
+}
+
+function SquirrelShape({ flip }) {
+  return (
+    <svg viewBox="0 0 44 38" width="1em" height="1em" transform={flip ? "scale(-1,1)" : undefined}>
+      <path d="M30 30 C42 26 42 8 28 6 C34 14 30 22 22 22 Z" fill="#c9773f" />
+      <circle cx="16" cy="22" r="12" fill="#e0975c" />
+      <circle cx="9" cy="14" r="4" fill="#e0975c" />
+      <circle cx="12" cy="19" r="1.6" fill="#2b2b2b" />
+    </svg>
+  );
+}
+
+function RabbitShape() {
+  return (
+    <svg viewBox="0 0 36 40" width="1em" height="1em">
+      <ellipse cx="18" cy="26" rx="13" ry="11" fill="#f2efe6" />
+      <ellipse cx="10" cy="8" rx="4" ry="12" fill="#f2efe6" />
+      <ellipse cx="20" cy="6" rx="4" ry="12" fill="#f2efe6" />
+      <circle cx="13" cy="24" r="1.6" fill="#2b2b2b" />
+      <circle cx="22" cy="24" r="1.6" fill="#2b2b2b" />
+    </svg>
+  );
+}
+
+function FoxShape() {
+  return (
+    <svg viewBox="0 0 40 36" width="1em" height="1em">
+      <path d="M20 34 C6 34 4 20 10 12 L2 6 L14 8 C17 6 23 6 26 8 L38 6 L30 12 C36 20 34 34 20 34 Z" fill="#e6763f" />
+      <path d="M18 30 L22 30 L20 24 Z" fill="#fff" opacity="0.85" />
+      <circle cx="15" cy="18" r="1.6" fill="#2b2b2b" />
+      <circle cx="25" cy="18" r="1.6" fill="#2b2b2b" />
+    </svg>
+  );
+}
+
+// Builds one smooth vertical gradient across the whole map instead of flat
+// stacked color blocks, so world-to-world transitions read as a soft
+// terrain change rather than a hard seam.
+function buildGroundGradient(worldCount) {
+  const n = Math.max(1, worldCount);
+  const bandPct = 100 / n;
+  const blend = Math.min(bandPct * 0.4, 6);
+  const stops = [];
+  for (let i = 0; i < n; i++) {
+    const color = GROUND_TONES[i % GROUND_TONES.length];
+    const start = i * bandPct;
+    const end = (i + 1) * bandPct;
+    stops.push(`${color} ${start}%`);
+    stops.push(`${color} ${Math.max(start, end - blend)}%`);
+  }
+  return `linear-gradient(180deg, ${stops.join(", ")})`;
+}
+
+export default function MapScenery({ worldCount = 3 }) {
   return (
     <div className="map-scenery" aria-hidden="true">
+      <div className="map-ground-gradient" style={{ background: buildGroundGradient(worldCount) }} />
+
       <div className="map-sun" />
       <svg className="map-rainbow" viewBox="0 0 200 100" preserveAspectRatio="none">
         <path d="M0 100 A 100 100 0 0 1 200 100" fill="none" stroke="#ff6b6b" strokeWidth="6" />
@@ -62,36 +134,22 @@ export default function MapScenery() {
         <path d="M48 100 A 52 52 0 0 1 152 100" fill="none" stroke="#8b6ff0" strokeWidth="6" />
       </svg>
 
-      <svg className="map-hills map-hills-far" viewBox="0 0 400 120" preserveAspectRatio="none">
-        <path d="M0 120 L0 78 Q60 50 120 68 T240 60 T400 72 L400 120 Z" fill="#a9e0b4" />
-      </svg>
-      <svg className="map-hills map-hills-back" viewBox="0 0 400 120" preserveAspectRatio="none">
-        <path d="M0 120 L0 70 Q50 30 100 55 T200 50 T300 60 T400 45 L400 120 Z" fill="#8fe0d3" />
-      </svg>
+      <span className="map-cloud map-cloud-1"><CloudShape /></span>
+      <span className="map-cloud map-cloud-2"><CloudShape /></span>
+      <span className="map-cloud map-cloud-3"><CloudShape /></span>
+      <span className="map-cloud map-cloud-4"><CloudShape /></span>
+      <span className="map-cloud map-cloud-5"><CloudShape /></span>
 
-      <svg className="map-trees" viewBox="0 0 400 140" preserveAspectRatio="none">
-        {TREES.map((t, i) => (
-          <g key={i} fill={t.tone} transform={`translate(${t.x} 140) scale(${t.scale})`}>
-            {t.type === "pine" ? <PineTree /> : <RoundTree />}
-          </g>
-        ))}
-      </svg>
+      <span className="map-bird map-bird-1"><BirdShape /></span>
+      <span className="map-bird map-bird-2"><BirdShape /></span>
+      <span className="map-bird map-bird-3"><ButterflyShape /></span>
+      <span className="map-bird map-bird-4"><BeeShape /></span>
+      <span className="map-bird map-bird-5"><ButterflyShape /></span>
 
-      <svg className="map-hills map-hills-front" viewBox="0 0 400 100" preserveAspectRatio="none">
-        <path d="M0 100 L0 60 Q60 20 130 50 T260 40 T400 55 L400 100 Z" fill="#ffd08f" />
-      </svg>
-
-      <span className="map-cloud map-cloud-1">☁️</span>
-      <span className="map-cloud map-cloud-2">☁️</span>
-      <span className="map-cloud map-cloud-3">☁️</span>
-      <span className="map-bird map-bird-1">🐦</span>
-      <span className="map-bird map-bird-2">🕊️</span>
-      <span className="map-bird map-bird-3">🦋</span>
-      <span className="map-bird map-bird-4">🐝</span>
-
-      <span className="map-critter map-critter-1">🐿️</span>
-      <span className="map-critter map-critter-2">🐇</span>
-      <span className="map-critter map-critter-3">🦊</span>
+      <span className="map-critter map-critter-1"><SquirrelShape /></span>
+      <span className="map-critter map-critter-2"><RabbitShape /></span>
+      <span className="map-critter map-critter-3"><FoxShape /></span>
+      <span className="map-critter map-critter-4"><SquirrelShape flip /></span>
 
       <div className="map-sparkles">
         {SPARKLES.map((s, i) => (
