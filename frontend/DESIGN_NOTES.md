@@ -317,6 +317,62 @@ one skin for the whole app?) and picking the simpler, more standard
 "user picks an app skin" interpretation was a deliberate scope call, not
 an oversight.
 
+## Part 8: Therapist view
+
+Added three tabs to `TherapistMode.jsx` alongside the existing Custom Sets
+tab (which was already fully built - custom word lists, dictionary lookup,
+manual phoneme override for out-of-dictionary words - and needed no
+changes): **Review Queue**, **Phoneme Stats**, **Calibration**.
+
+**Review Queue** is where Phase 5's therapist-queue operating point (no
+precision floor, ranked by calibrated probability - RESULTS.md's
+recall/precision-at-top-K table) finally has somewhere to live in the
+product, not just in an eval script. Shows word, phoneme, probability,
+naming status ("named" vs "abstained (not named)" - the same naming rule
+from `backend/decision.py`, surfaced honestly rather than re-explained),
+and top competitor phoneme. `attempt_history` already stored everything
+needed for this except `top_competitor` and an explicit `has_recording`
+flag - added both to the mock server's attempt records; the real backend
+doesn't persist per-attempt `top_competitor` at all today (only uses it
+transiently inside `decision.py`'s naming logic), which is a real,
+honestly-logged gap - would need a `backend/` schema change to close, out
+of scope after Part 1's freeze.
+
+**Recording playback**, which the brief asked for, does not exist anywhere
+in this system - `scorer_phase3.py` scores audio in memory and discards
+it, nothing persists a recording to disk or object storage. Rather than
+fake it, the row shows a disabled, clearly-labeled 🔇 button ("Recording
+not saved - audio is scored in memory and discarded") - an honest
+placeholder, not a missing feature pretending to work.
+
+**Phoneme Stats** reuses `phoneme_errors` from `useApp()` (already fetched
+by `AppContext` for Home's recommendation card - no new API call needed) as
+a simple horizontal bar chart of wrong-verdict counts per phoneme.
+
+**Calibration** surfaces the per-child running baseline
+(`backend/db.py`'s `speaker_baseline` table / `get_all_speaker_baselines`)
+- mean/std GOP per phoneme, the numbers `child_calibration.py`'s
+speaker-relative features are computed against. Real problem: **no route
+exposes this over HTTP** - `main.py` never wraps
+`get_all_speaker_baselines()` in an endpoint. Since backend/ is frozen
+after Part 1, this run can't add one. Handled honestly rather than
+skipped or faked: added a mock-only `/api/therapist/calibration/:userId`
+route (clearly commented as mock-only in `server.js`) so the UI could be
+designed and reviewed now, and `api.getTherapistCalibration()` calls it
+with a try/catch that degrades to `null` on any failure - against the
+real (frozen) backend this 404s today and the tab shows "Calibration
+state isn't available yet" instead of crashing, so Part 9's "works
+against real backend" check still passes; wiring the real route is a
+one-line addition for a future backend-touching session.
+
+**Real bug caught while testing:** the mock server process running for
+this whole session was started before these changes and Node doesn't
+hot-reload - screenshotting the review queue against the live dev server
+returned attempt records with no `top_competitor`/`has_recording` fields
+at all (the OLD code, still in memory) until the process was manually
+restarted. Worth remembering for any future part of this run: a `server.js`
+edit needs a restart, not just a save.
+
 **Two bugs caught only by testing at 390px, not visible at desktop width:**
 1. `.home-header` (greeting + mascot vs. the speech-toggle/practice/
    therapist icon buttons) had no `flex-wrap`, so at 390px the right-hand

@@ -4,8 +4,16 @@ import FloatingDecor from "../components/FloatingDecor";
 import * as api from "../lib/api";
 import WordPractice from "./WordPractice";
 
+const TABS = [
+  { id: "queue", label: "Review Queue" },
+  { id: "stats", label: "Phoneme Stats" },
+  { id: "sets", label: "Custom Sets" },
+  { id: "calibration", label: "Calibration" },
+];
+
 export default function TherapistMode({ onExit }) {
-  const { userId } = useApp();
+  const { userId, phonemeErrors } = useApp();
+  const [tab, setTab] = useState("queue");
   const [sets, setSets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newSetName, setNewSetName] = useState("");
@@ -64,58 +72,212 @@ export default function TherapistMode({ onExit }) {
         </button>
         <h2 className="practice-title">Therapist Mode</h2>
       </div>
+
+      <div className="therapist-tabs" role="tablist">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            className={`therapist-tab ${tab === t.id ? "therapist-tab--active" : ""}`}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "queue" && <ReviewQueueTab userId={userId} />}
+      {tab === "stats" && <PhonemeStatsTab phonemeErrors={phonemeErrors} />}
+      {tab === "calibration" && <CalibrationTab userId={userId} />}
+
+      {tab === "sets" && (
+        <>
+          <p className="therapist-help">
+            Coverage for children with severe or atypical needs that the built-in curriculum does not cover. Build a
+            custom word list for anything the standard levels don't address.
+          </p>
+
+          <form className="new-set-form" onSubmit={handleCreateSet}>
+            <input
+              className="text-input"
+              placeholder="New word set name (e.g. Family names)"
+              value={newSetName}
+              onChange={(e) => setNewSetName(e.target.value)}
+            />
+            <button className="btn btn-secondary" type="submit">
+              Create set
+            </button>
+          </form>
+
+          {loading ? (
+            <p>Loading...</p>
+          ) : sets.length === 0 ? (
+            <p className="empty-state">No custom sets yet. Create one above.</p>
+          ) : (
+            <div className="custom-set-list">
+              {sets.map((s) => (
+                <div key={s.id} className="custom-set-card">
+                  <button className="custom-set-main" onClick={() => setActiveSetId(s.id)}>
+                    <span className="custom-set-name">{s.name}</span>
+                    <span className="custom-set-count">{s.words.length} words</span>
+                  </button>
+                  {confirmDeleteSetId === s.id ? (
+                    <span className="confirm-delete-inline">
+                      <button className="btn-danger-sm" onClick={() => handleDeleteSet(s.id)}>
+                        Delete it
+                      </button>
+                      <button className="btn-cancel-sm" onClick={() => setConfirmDeleteSetId(null)}>
+                        Cancel
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      className="delete-icon-btn"
+                      onClick={() => setConfirmDeleteSetId(s.id)}
+                      aria-label={`Delete ${s.name}`}
+                      title="Delete this set"
+                    >
+                      🗑
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// Phase 5's therapist-queue operating point (no precision floor, ranked by
+// probability - see RESULTS.md's "Therapist-queue point") has nowhere to
+// live in the UI until now. `attempt_history` doesn't store audio (nothing
+// in this system does - recordings are scored in memory and discarded), so
+// "recording playback" is shown as an honest disabled state, not faked.
+function ReviewQueueTab({ userId }) {
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setRows(null);
+    api
+      .getTherapistTopK(25, userId)
+      .then(setRows)
+      .catch((e) => setError(e.message || "Could not load the review queue."));
+  }, [userId]);
+
+  if (error) return <p className="error-text">{error}</p>;
+  if (rows === null) return <p>Loading...</p>;
+  if (rows.length === 0) {
+    return <p className="empty-state">No attempts recorded yet for this child - the queue fills in as they practice.</p>;
+  }
+
+  return (
+    <div className="review-queue">
       <p className="therapist-help">
-        Coverage for children with severe or atypical needs that the built-in curriculum does not cover. Build a
-        custom word list for anything the standard levels don't address.
+        Every recorded attempt, ranked by the model's calibrated probability of error - not filtered to the
+        child-facing threshold, so this is where lower-confidence signal that's too unreliable to name to a child
+        directly still has value for a clinician reviewing it.
       </p>
-
-      <form className="new-set-form" onSubmit={handleCreateSet}>
-        <input
-          className="text-input"
-          placeholder="New word set name (e.g. Family names)"
-          value={newSetName}
-          onChange={(e) => setNewSetName(e.target.value)}
-        />
-        <button className="btn btn-secondary" type="submit">
-          Create set
-        </button>
-      </form>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : sets.length === 0 ? (
-        <p className="empty-state">No custom sets yet. Create one above.</p>
-      ) : (
-        <div className="custom-set-list">
-          {sets.map((s) => (
-            <div key={s.id} className="custom-set-card">
-              <button className="custom-set-main" onClick={() => setActiveSetId(s.id)}>
-                <span className="custom-set-name">{s.name}</span>
-                <span className="custom-set-count">{s.words.length} words</span>
-              </button>
-              {confirmDeleteSetId === s.id ? (
-                <span className="confirm-delete-inline">
-                  <button className="btn-danger-sm" onClick={() => handleDeleteSet(s.id)}>
-                    Delete it
-                  </button>
-                  <button className="btn-cancel-sm" onClick={() => setConfirmDeleteSetId(null)}>
-                    Cancel
-                  </button>
-                </span>
-              ) : (
-                <button
-                  className="delete-icon-btn"
-                  onClick={() => setConfirmDeleteSetId(s.id)}
-                  aria-label={`Delete ${s.name}`}
-                  title="Delete this set"
-                >
-                  🗑
-                </button>
+      <div className="review-queue-list">
+        {rows.map((r, i) => (
+          <div key={i} className="review-queue-row">
+            <span className="review-queue-prob" title="Calibrated P(error)">
+              {(r.probability * 100).toFixed(0)}%
+            </span>
+            <div className="review-queue-main">
+              <span className="review-queue-word">{r.word || "—"}</span>
+              <span className="review-queue-phoneme">/{r.phoneme}/</span>
+            </div>
+            <div className="review-queue-detail">
+              <span className={`review-queue-status review-queue-status--${r.status}`}>
+                {r.status === "wrong" ? "named" : r.status === "unclear" ? "abstained (not named)" : r.status}
+              </span>
+              {r.top_competitor && (
+                <span className="review-queue-competitor">top competitor: /{r.top_competitor}/</span>
               )}
             </div>
-          ))}
+            <button className="btn-icon review-queue-playback" disabled title="Recording not saved - audio is scored in memory and discarded">
+              🔇
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PhonemeStatsTab({ phonemeErrors }) {
+  if (!phonemeErrors || phonemeErrors.length === 0) {
+    return <p className="empty-state">No phoneme error data yet - this fills in as the child practices.</p>;
+  }
+  const max = Math.max(...phonemeErrors.map((p) => p.error_count));
+  return (
+    <div className="phoneme-stats">
+      <p className="therapist-help">Wrong-verdict counts by target phoneme, across every level and practice track.</p>
+      {phonemeErrors.map((p) => (
+        <div key={p.phoneme} className="phoneme-stat-row">
+          <span className="phoneme-stat-label">/{p.phoneme}/</span>
+          <div className="phoneme-stat-bar-track">
+            <div className="phoneme-stat-bar-fill" style={{ width: `${(p.error_count / max) * 100}%` }} />
+          </div>
+          <span className="phoneme-stat-count">{p.error_count}</span>
         </div>
-      )}
+      ))}
+    </div>
+  );
+}
+
+// backend/db.py has get_all_speaker_baselines() (the per-speaker Welford
+// running mean/std that child_calibration.py's speaker-relative features
+// are built from) but main.py never exposes it over HTTP - out of scope to
+// add this run (backend/ is frozen after Part 1). api.getTherapistCalibration
+// degrades to null against the real backend rather than throwing, so this
+// renders an honest "not available yet" instead of breaking Part 9's
+// real-backend check.
+function CalibrationTab({ userId }) {
+  const [data, setData] = useState(undefined);
+
+  useEffect(() => {
+    setData(undefined);
+    api.getTherapistCalibration(userId).then(setData);
+  }, [userId]);
+
+  if (data === undefined) return <p>Loading...</p>;
+  if (data === null) {
+    return (
+      <p className="empty-state">
+        Calibration state isn't available yet - the backend tracks a running per-phoneme baseline per child
+        (`backend/db.py`'s speaker_baseline table) but doesn't expose it over the API yet.
+      </p>
+    );
+  }
+  const phonemes = Object.keys(data);
+  if (phonemes.length === 0) {
+    return <p className="empty-state">No calibration data yet for this child.</p>;
+  }
+  return (
+    <div className="calibration-table">
+      <p className="therapist-help">
+        This child's running per-phoneme baseline (Welford mean/std of GOP scores) - what their speaker-relative
+        features are computed against.
+      </p>
+      <div className="calibration-header-row">
+        <span>phoneme</span>
+        <span>n attempts</span>
+        <span>mean GOP</span>
+        <span>std GOP</span>
+      </div>
+      {phonemes.map((p) => (
+        <div key={p} className="calibration-row">
+          <span>/{p}/</span>
+          <span>{data[p].n}</span>
+          <span>{data[p].mean_gop.toFixed(3)}</span>
+          <span>{data[p].std_gop.toFixed(3)}</span>
+        </div>
+      ))}
     </div>
   );
 }

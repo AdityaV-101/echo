@@ -111,7 +111,13 @@ function scoreResult({ word, targetPhoneme, canonical, forced, userId }) {
   const probability = status === "wrong" ? 0.71 + Math.random() * 0.29
     : status === "unclear" ? 0.10 + Math.random() * 0.61
     : Math.random() * 0.10;
-  const heard = status === "wrong" ? plausibleSubstitution(targetPhoneme) : null;
+  // top_competitor exists on every attempt in the real pipeline (features.py
+  // computes it regardless of status) - only whether it's SHOWN to the
+  // child as "heard" is gated by the naming rule (status=="wrong" only).
+  // The therapist queue is allowed to see it always, which is the whole
+  // point of a therapist-facing view versus the child-facing one.
+  const topCompetitor = plausibleSubstitution(targetPhoneme);
+  const heard = status === "wrong" ? topCompetitor : null;
   const percent_correct = { correct: 100, unclear: 50, wrong: 0 }[status];
   const feedback = {
     correct: `Nice work on "${word}"!`,
@@ -134,7 +140,13 @@ function scoreResult({ word, targetPhoneme, canonical, forced, userId }) {
 
   attemptHistory.push({
     user_id: userId, phoneme: targetPhoneme, status, probability: result.probability,
-    word, created_at: new Date().toISOString(),
+    word, top_competitor: topCompetitor, heard,
+    // No audio is stored anywhere in this system, mock or real - scoring
+    // reads the recording in memory and discards it. Explicit false here
+    // rather than omitting the field, so the UI can render an honest
+    // "recording not saved" state instead of guessing.
+    has_recording: false,
+    created_at: new Date().toISOString(),
   });
   if (status === "wrong") {
     if (!phonemeErrorCounts.has(userId)) phonemeErrorCounts.set(userId, {});
@@ -142,7 +154,9 @@ function scoreResult({ word, targetPhoneme, canonical, forced, userId }) {
     pe[targetPhoneme] = (pe[targetPhoneme] || 0) + 1;
     therapistQueue.push({
       id: therapistQueue.length + 1, user_id: userId, phoneme: targetPhoneme,
+      word, top_competitor: topCompetitor, heard,
       n_wrong: 1, n_window: 1, mean_probability: result.probability,
+      has_recording: false,
       created_at: new Date().toISOString(), reviewed: 0,
     });
   }
@@ -303,6 +317,30 @@ const server = http.createServer(async (req, res) => {
       const pool = userId ? attemptHistory.filter((a) => a.user_id === userId) : attemptHistory;
       const ranked = [...pool].sort((a, b) => b.probability - a.probability).slice(0, k);
       return sendJson(res, 200, ranked);
+    }
+
+    // MOCK-ONLY: there is no real /api/therapist/calibration route -
+    // backend/db.py has get_all_speaker_baselines() but main.py never
+    // exposes it over HTTP, and backend/ is frozen for the rest of this
+    // overnight run (see frontend/DESIGN_NOTES.md Part 8). The frontend
+    // calls this route with a try/catch that degrades gracefully to "not
+    // available" against the real backend, which will 404 here-shaped
+    // request today. This lets the UI be built and reviewed now without
+    // requiring a backend change that's out of scope for this session.
+    if (req.method === "GET" && parts[0] === "api" && parts[1] === "therapist" && parts[2] === "calibration") {
+      const userId = decodeURIComponent(parts[3] || "");
+      const pe = phonemeErrorCounts.get(userId) || {};
+      const phonemes = Object.keys(pe).length ? Object.keys(pe) : ["R", "S", "TH", "L"];
+      const baselines = {};
+      for (const p of phonemes) {
+        const n = 8 + Math.floor(Math.random() * 40);
+        baselines[p] = {
+          phoneme: p, n,
+          mean_gop: Number((-2.5 + Math.random() * 1.5).toFixed(3)),
+          std_gop: Number((0.4 + Math.random() * 0.6).toFixed(3)),
+        };
+      }
+      return sendJson(res, 200, baselines);
     }
 
     sendJson(res, 404, { detail: "Not found (mock server)" });

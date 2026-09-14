@@ -34,6 +34,21 @@ export async function getTherapistReviewQueue(userId) {
   return handleResponse(res);
 }
 
+// No real /api/therapist/calibration route exists yet (backend/db.py has
+// get_all_speaker_baselines() but main.py never exposes it, and backend/
+// is frozen for this session - see DESIGN_NOTES.md Part 8). Degrades to
+// null rather than throwing, so the UI can show an honest "not available"
+// state against the real backend instead of an error screen.
+export async function getTherapistCalibration(userId) {
+  try {
+    const res = await fetch(`${BASE_URL}/api/therapist/calibration/${encodeURIComponent(userId)}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export async function login(id) {
   const res = await fetch(`${BASE_URL}/api/login`, {
     method: "POST",
