@@ -234,6 +234,89 @@ emoji, the world banner icon, the 🚩 current-level flag, the 🎤/🔥 icons
 used in Practice) were also kept, consistent with how the rest of the app
 already uses emoji as compact icons rather than ambient decoration.
 
+## Part 7: Visual language - themes, motion rules, contrast
+
+**Four themes, as CSS custom properties, switchable per-device.** Added
+`[data-theme="jungle|space|ocean|candy"]` blocks in `index.css` overriding
+the brand/background palette (`--color-bg*`, `--color-primary*`,
+`--color-secondary*`, `--color-accent*`, `--color-text*`, `--color-card`,
+`--color-ring-track`). Deliberately did NOT theme `--color-success`/
+`--color-warning`/`--color-danger` - those carry a fixed semantic meaning
+(green=good, amber=caution) that shouldn't shift with the skin. A new
+`src/lib/theme.js` persists the choice to `localStorage`
+(`speechpal_theme`, independent of the backend's per-user settings - a
+color skin isn't a clinical setting and has nowhere to live server-side)
+and applies it via a `data-theme` attribute set at module load in
+`App.jsx`, before the first paint (a `useEffect` would apply it one frame
+late and flash the default theme first). A palette-icon button in Home's
+header opens a 5-swatch picker (Sunny/Jungle/Space/Ocean/Candy).
+MapScenery's ground-gradient bands also read a per-theme tone set now
+(`GROUND_TONE_SETS`), so the map's terrain actually looks like the chosen
+world instead of always the same fixed rainbow of bands regardless of
+theme. Screenshotted all three new themes side by side
+(`mock-server/screenshot_themes.mjs`) - Space (a dark navy/purple theme)
+in particular needed checking since it's the one most different in kind
+from the rest, and text/mascot/buttons all read cleanly against it.
+
+**Contrast verified programmatically, not by eye**
+(`mock-server/check_contrast.mjs`) - it parses colors straight out of
+`index.css` (not hand-copied into the script, so it can't silently drift
+from what's shipped) and checks every theme's text/background pairs
+against the WCAG threshold that actually applies: 4.5:1 for normal text,
+3:1 for large bold text (every button/bubble label in this app is >=18px
+and font-weight 700, which qualifies). First run found real failures -
+not just in the new themes, but in the pre-existing default palette that's
+been live since Part 3: white button text on `--color-primary`/
+`--color-secondary` was as low as 2.14:1 and 2.52:1 (both fail even the
+relaxed 3:1 large-text bar), and secondary body text
+(`--color-text-soft`) was just under 4.5:1 on two backgrounds. Fixed by
+darkening the specific failing tokens (`--color-primary`,
+`--color-secondary`, and `--color-text-soft` in the default and ocean
+themes; `--color-secondary` in jungle and space) by the minimum amount
+needed to clear the bar - all values recomputed via the actual contrast
+formula, not guessed. Re-ran: all 5 themes pass all checks now. This was a
+real, previously-unverified accessibility gap in code that predates this
+part, caught only because the brief asked for the check to be automated
+rather than eyeballed.
+
+**Reduced motion: extended from mascot-only to the whole app.** Before
+this part, `prefers-reduced-motion` was only handled inside `mascot.css` -
+every other animation (the map's sun/rainbow/clouds/birds/critters/
+sparkles, the level trail's marching dashes, the current-level pulse
+ring, the flag wave, FloatingDecor's drifting emoji, confetti, the mic
+button's idle pulse) had no reduced-motion handling at all. Added one
+global rule in `index.css` that collapses every animation/transition
+duration to near-zero under `prefers-reduced-motion: reduce`, checked to
+confirm it doesn't fight mascot.css's own scoped block (that one also
+sets static per-state pose transforms so a state stays visually
+distinguishable with motion off - a different CSS property, so the two
+rules don't conflict).
+
+**Sticker aesthetic: audited, not rebuilt.** Checked every interactive
+element's `box-shadow` for the "solid offset, not blur" pattern the brief
+asked for - primary/secondary buttons, the mic button, and level bubbles
+already consistently use it (`0 Npx 0 <dark-color>`, established in
+earlier parts), so this was a verification pass rather than a rework.
+Static content cards (recommendation card, settings panel) intentionally
+keep a soft ambient shadow (`--shadow-sm/md/lg`) rather than a hard
+sticker edge - a common and deliberate mix (Duolingo does the same:
+sticker-style interactive elements, soft-elevation static surfaces), not
+an oversight.
+
+**Not done this part, logged honestly:** a paper-grain/texture overlay
+(the brief's "texture") was deprioritized in favor of the contrast fix and
+motion-rule gap, both of which are real correctness issues rather than
+polish; the rainbow decoration in MapScenery still uses fixed rainbow
+colors rather than a per-theme palette (a minor mismatch in the Space
+theme specifically - a rainbow in a night sky - acceptable but noted); and
+themes are currently a Home-screen-triggered, app-wide device preference,
+not scoped per-world-section as Part 6's world banners might suggest -
+that would be a bigger, separate design decision (does the app's whole
+chrome change as you scroll into a new world, or does the player choose
+one skin for the whole app?) and picking the simpler, more standard
+"user picks an app skin" interpretation was a deliberate scope call, not
+an oversight.
+
 **Two bugs caught only by testing at 390px, not visible at desktop width:**
 1. `.home-header` (greeting + mascot vs. the speech-toggle/practice/
    therapist icon buttons) had no `flex-wrap`, so at 390px the right-hand

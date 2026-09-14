@@ -3,10 +3,10 @@
 :root {
   --color-bg: #f4faf1;
   --color-bg-alt: #e2f4e6;
-  --color-primary: #ff7f2a;
+  --color-primary: #e57226;
   --color-primary-dark: #d9600f;
   --color-primary-light: #ffc247;
-  --color-secondary: #14c7ae;
+  --color-secondary: #11a792;
   --color-secondary-dark: #0f8f80;
   --color-accent: #8b6ff0;
   --color-accent-dark: #6f52d6;
@@ -14,7 +14,7 @@
   --color-warning: #ffb84d;
   --color-danger: #ff6b6b;
   --color-text: #223326;
-  --color-text-soft: #6b7d6a;
+  --color-text-soft: #657664;
   --color-card: #ffffff;
   --color-ring-track: #e0efe0;
   --shadow-sm: 0 2px 10px rgba(30, 70, 45, 0.08);
@@ -34,6 +34,75 @@
   --mascot-eye-white: #fff8ec;
   --mascot-outline: #163526;
   --mascot-ring: var(--color-secondary);
+}
+
+/* --- Themes ---
+   Four selectable palettes (Part 7), applied via [data-theme] on <html>
+   (see src/lib/ThemeContext.jsx). Only the brand/background palette is
+   themed - --color-success/--color-warning/--color-danger stay fixed
+   across every theme on purpose, since those carry a fixed semantic
+   meaning (a green success state, an amber caution) that shouldn't shift
+   with the skin. Every theme's text/background pairs are checked by
+   mock-server/check_contrast.mjs against WCAG 4.5:1. */
+[data-theme="jungle"] {
+  --color-bg: #f3f9ec;
+  --color-bg-alt: #e2f0d4;
+  --color-primary: #4d9a3f;
+  --color-primary-dark: #367329;
+  --color-primary-light: #7fc766;
+  --color-secondary: #be8b28;
+  --color-secondary-dark: #b07f1e;
+  --color-accent: #8a5a34;
+  --color-accent-dark: #6b4326;
+  --color-text: #24331d;
+  --color-text-soft: #5c6e50;
+  --color-card: #fffef8;
+  --color-ring-track: #e3edd8;
+}
+[data-theme="space"] {
+  --color-bg: #191a3a;
+  --color-bg-alt: #23255a;
+  --color-primary: #a06bff;
+  --color-primary-dark: #7c46e0;
+  --color-primary-light: #c79bff;
+  --color-secondary: #28a39e;
+  --color-secondary-dark: #219a95;
+  --color-accent: #ff6fae;
+  --color-accent-dark: #d94f8c;
+  --color-text: #f3f1ff;
+  --color-text-soft: #c2bde8;
+  --color-card: #262860;
+  --color-ring-track: #34366e;
+}
+[data-theme="ocean"] {
+  --color-bg: #eef8fb;
+  --color-bg-alt: #d9f0f5;
+  --color-primary: #1f8fc2;
+  --color-primary-dark: #146a95;
+  --color-primary-light: #63bbe3;
+  --color-secondary: #24a689;
+  --color-secondary-dark: #1c9379;
+  --color-accent: #ff8266;
+  --color-accent-dark: #dd6448;
+  --color-text: #133544;
+  --color-text-soft: #4a7684;
+  --color-card: #ffffff;
+  --color-ring-track: #d6ecf2;
+}
+[data-theme="candy"] {
+  --color-bg: #fdf1f7;
+  --color-bg-alt: #fbe1ee;
+  --color-primary: #e2508f;
+  --color-primary-dark: #b8326b;
+  --color-primary-light: #f08bb6;
+  --color-secondary: #8f6fe0;
+  --color-secondary-dark: #6b4fc0;
+  --color-accent: #33b6a8;
+  --color-accent-dark: #248c81;
+  --color-text: #3a2036;
+  --color-text-soft: #7d6078;
+  --color-card: #ffffff;
+  --color-ring-track: #f6dceb;
 }
 
 * {
@@ -428,6 +497,37 @@ input {
   display: flex;
   flex-shrink: 0;
   gap: 10px;
+}
+
+.theme-picker {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: -8px 0 18px;
+  padding: 10px 16px;
+  background: var(--color-card);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 1;
+}
+.theme-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+}
+.theme-swatch:hover {
+  transform: scale(1.1);
+}
+.theme-swatch--active {
+  border-color: var(--color-text);
 }
 
 .recommendation-card {
@@ -1645,5 +1745,24 @@ input {
 @media (max-width: 480px) {
   .practice-word-row .target-word {
     font-size: 52px;
+  }
+}
+
+/* --- Reduced motion: app-wide kill switch ---
+   Every other animated element in this app (map sun/rainbow/clouds/birds/
+   critters/sparkles, the level trail's marching dashes, the current-level
+   pulse, the flag wave, FloatingDecor's drifting emoji, confetti, the mic
+   pulse) had no prefers-reduced-motion handling before this - only
+   mascot.css did (it needs its own scoped block regardless, since several
+   of its states rely on a STATIC end pose, not just "no animation", to
+   stay visually distinct - see mascot.css). This rule only touches
+   animation/transition timing, so it doesn't fight those static pose
+   overrides. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -24,7 +24,17 @@ const SPARKLES = [
   { left: "95%", size: 8, color: "#ffb84d", duration: 10.5, delay: 3.5 },
 ];
 
-const GROUND_TONES = ["#ffd08f", "#a9e0b4", "#8fe0d3", "#c9c2f0", "#ffb8d4"];
+// One ground-tone set per Part 7 theme, so the map's terrain bands read as
+// "the world you picked" rather than always the same rainbow regardless of
+// theme. "default" keeps the original warm sand -> mint -> teal -> lilac ->
+// pink progression.
+const GROUND_TONE_SETS = {
+  default: ["#ffd08f", "#a9e0b4", "#8fe0d3", "#c9c2f0", "#ffb8d4"],
+  jungle: ["#cfe8a8", "#a3d98c", "#7fc98f", "#6fc0a6", "#8fd6c2"],
+  space: ["#3a2f6e", "#4b3a86", "#2f5a8f", "#3a7ba8", "#5a4a9e"],
+  ocean: ["#bfe8f0", "#9fdcec", "#8fd0e8", "#a0e0d8", "#c0eee8"],
+  candy: ["#ffd6ea", "#ffc2e0", "#f0b8ec", "#e0c4f5", "#ffd0d8"],
+};
 
 function CloudShape() {
   return (
@@ -105,13 +115,13 @@ function FoxShape() {
 // Builds one smooth vertical gradient across the whole map instead of flat
 // stacked color blocks, so world-to-world transitions read as a soft
 // terrain change rather than a hard seam.
-function buildGroundGradient(worldCount) {
+function buildGroundGradient(worldCount, tones) {
   const n = Math.max(1, worldCount);
   const bandPct = 100 / n;
   const blend = Math.min(bandPct * 0.4, 6);
   const stops = [];
   for (let i = 0; i < n; i++) {
-    const color = GROUND_TONES[i % GROUND_TONES.length];
+    const color = tones[i % tones.length];
     const start = i * bandPct;
     const end = (i + 1) * bandPct;
     stops.push(`${color} ${start}%`);
@@ -120,10 +130,11 @@ function buildGroundGradient(worldCount) {
   return `linear-gradient(180deg, ${stops.join(", ")})`;
 }
 
-export default function MapScenery({ worldCount = 3 }) {
+export default function MapScenery({ worldCount = 3, theme = "default" }) {
+  const tones = GROUND_TONE_SETS[theme] || GROUND_TONE_SETS.default;
   return (
     <div className="map-scenery" aria-hidden="true">
-      <div className="map-ground-gradient" style={{ background: buildGroundGradient(worldCount) }} />
+      <div className="map-ground-gradient" style={{ background: buildGroundGradient(worldCount, tones) }} />
 
       <div className="map-sun" />
       <svg className="map-rainbow" viewBox="0 0 200 100" preserveAspectRatio="none">

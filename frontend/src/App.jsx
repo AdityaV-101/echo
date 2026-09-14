@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { AppProvider, useApp } from "./lib/AppContext";
 import * as api from "./lib/api";
 import { setMockDetected } from "./lib/mockControl";
+import { applyTheme, getTheme } from "./lib/theme";
+
+// Applied at module load, before the first paint - a useEffect would apply
+// it one frame late and flash the default theme first.
+applyTheme(getTheme());
 import MockStatusBar from "./dev/MockStatusBar";
 import MascotLab from "./dev/MascotLab";
 import WordArtLab from "./dev/WordArtLab";

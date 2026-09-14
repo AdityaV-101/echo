@@ -1,9 +1,11 @@
+import { useState } from "react";
 import Mascot from "../components/Mascot";
 import FloatingDecor from "../components/FloatingDecor";
 import MapScenery from "../components/MapScenery";
 import Doodles from "../components/Doodles";
 import SpeechModeToggle from "../components/SpeechModeToggle";
 import { useApp } from "../lib/AppContext";
+import { THEMES, getTheme, setTheme } from "../lib/theme";
 
 // A gentle winding-path effect for the level bubbles, Duolingo-style.
 const PATH_OFFSETS = [15, 45, 75, 60, 30, 10, 40, 70];
@@ -41,6 +43,8 @@ function buildTrailPath(offsets) {
 
 export default function Home({ onSelectLevel, onOpenPracticeTracks, onOpenTherapist, onPracticePhoneme }) {
   const { user, levels, levelProgress, recommendations, logout, saveSettings } = useApp();
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const [activeTheme, setActiveTheme] = useState(getTheme());
 
   const currentLevel = user?.current_level ?? 1;
   const appSpeechEnabled = user ? !!user.app_speech_enabled : true;
@@ -64,7 +68,7 @@ export default function Home({ onSelectLevel, onOpenPracticeTracks, onOpenTherap
 
   return (
     <div className="screen screen-home">
-      <MapScenery worldCount={worldCount} />
+      <MapScenery worldCount={worldCount} theme={activeTheme} />
       <FloatingDecor variant="home" />
       <Doodles variant="home" />
       <header className="home-header">
@@ -100,8 +104,47 @@ export default function Home({ onSelectLevel, onOpenPracticeTracks, onOpenTherap
               />
             </svg>
           </button>
+          <button
+            className="btn-icon"
+            onClick={() => setThemePickerOpen((v) => !v)}
+            title="Change theme"
+            aria-label="Change theme"
+            aria-expanded={themePickerOpen}
+          >
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+              <path
+                d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4c2 0 3.6-1.6 3.6-3.6C21 6.6 17 2 12 2Z"
+                stroke="var(--color-text)"
+                strokeWidth="1.5"
+              />
+              <circle cx="7" cy="12" r="1.4" fill="var(--color-primary)" />
+              <circle cx="9" cy="7.5" r="1.4" fill="var(--color-secondary)" />
+              <circle cx="15" cy="7.5" r="1.4" fill="var(--color-accent)" />
+              <circle cx="17" cy="12" r="1.4" fill="var(--color-warning)" />
+            </svg>
+          </button>
         </div>
       </header>
+
+      {themePickerOpen && (
+        <div className="theme-picker">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={`theme-swatch ${activeTheme === t.id ? "theme-swatch--active" : ""}`}
+              style={{ background: t.swatch }}
+              onClick={() => {
+                setTheme(t.id);
+                setActiveTheme(t.id);
+              }}
+              title={t.label}
+              aria-label={`${t.label} theme`}
+              aria-pressed={activeTheme === t.id}
+            />
+          ))}
+        </div>
+      )}
 
       {recommendations.length > 0 && (
         <div className="recommendation-card">
