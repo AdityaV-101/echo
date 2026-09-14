@@ -1388,3 +1388,46 @@ input {
     font-size: 22px;
   }
 }
+
+/* Dev-only mock status bar (frontend/src/dev/MockStatusBar.jsx) - only ever
+   rendered when the mock server answers /api/health with is_mock: true. */
+.mock-status-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #1a1a2e;
+  color: #fff;
+  font-size: 12px;
+  font-family: monospace;
+  flex-wrap: wrap;
+}
+.mock-status-bar-label {
+  font-weight: 700;
+  color: #ffd166;
+  margin-right: 4px;
+}
+.mock-status-btn {
+  background: #2d2d4d;
+  color: #ddd;
+  border: 1px solid #4a4a6a;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: monospace;
+}
+.mock-status-btn:hover {
+  background: #3a3a5c;
+}
+.mock-status-btn--active {
+  background: #22c9b8;
+  color: #0a0a1a;
+  border-color: #22c9b8;
+  font-weight: 700;
+}

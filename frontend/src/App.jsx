@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppProvider, useApp } from "./lib/AppContext";
+import * as api from "./lib/api";
+import { setMockDetected } from "./lib/mockControl";
+import MockStatusBar from "./dev/MockStatusBar";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import WordPractice from "./pages/WordPractice";
@@ -53,8 +56,16 @@ function Router() {
 }
 
 export default function App() {
+  useEffect(() => {
+    api
+      .checkHealth()
+      .then((h) => setMockDetected(!!h.is_mock))
+      .catch(() => setMockDetected(false));
+  }, []);
+
   return (
     <AppProvider>
+      <MockStatusBar />
       <Router />
     </AppProvider>
   );

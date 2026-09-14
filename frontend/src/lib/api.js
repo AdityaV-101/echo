@@ -1,3 +1,5 @@
+import { getForcedStatus } from "./mockControl";
+
 const BASE_URL = "http://localhost:8000";
 
 async function handleResponse(res) {
@@ -12,6 +14,24 @@ async function handleResponse(res) {
     throw new Error(detail);
   }
   return res.json();
+}
+
+export async function checkHealth() {
+  const res = await fetch(`${BASE_URL}/api/health`);
+  return handleResponse(res);
+}
+
+export async function getTherapistTopK(k = 25, userId) {
+  const params = new URLSearchParams({ k: String(k) });
+  if (userId) params.set("user_id", userId);
+  const res = await fetch(`${BASE_URL}/api/therapist/top-k?${params}`);
+  return handleResponse(res);
+}
+
+export async function getTherapistReviewQueue(userId) {
+  const params = userId ? `?user_id=${encodeURIComponent(userId)}` : "";
+  const res = await fetch(`${BASE_URL}/api/therapist/review-queue${params}`);
+  return handleResponse(res);
 }
 
 export async function login(id) {
@@ -61,6 +81,11 @@ export async function scoreWord({ userId, word, level, phonemesOverride, targetP
   if (targetPhoneme) form.append("target_phoneme", targetPhoneme);
   if (position) form.append("position", position);
   form.append("audio", audioBlob, "recording.webm");
+  // Dev-only: the mock server reads this field to force a specific verdict
+  // (see frontend/src/dev/MockStatusBar.jsx). The real backend ignores any
+  // extra form field it doesn't recognize, so this is always safe to send.
+  const forced = getForcedStatus();
+  if (forced && forced !== "random") form.append("force", forced);
   const res = await fetch(`${BASE_URL}/api/score`, { method: "POST", body: form });
   return handleResponse(res);
 }
