@@ -1,7 +1,73 @@
 # Echo frontend rebuild: running design log
 
 Overnight run, backend closeout + frontend rebuild. This file is updated as
-each part completes - see the top for a rolling summary once more parts land.
+each part completes.
+
+## Summary (read this first)
+
+All 9 parts of the overnight run are complete and committed (branch
+`rebuild`, one commit per part). What shipped, what's honestly still
+missing, and what needs a human decision:
+
+**Backend (Part 1):** the frozen model ran once against speechocean762's
+held-out test split (125 speakers, genuinely never touched by any prior
+phase) through the real production pipeline. Headline: precision=0.667,
+recall=0.216, FRR=0.002 on the child slice - full numbers and a real bug
+fix (the naming rule was reporting a category string instead of a
+phoneme; fixed) are in `RESULTS.md`. Data-access requests for three
+external clinical corpora are drafted (`eval/corpora.md`, not sent).
+
+**Frontend (Parts 2-9):** a zero-dependency mock server for dev-time
+review; the mascot rebuilt from scratch (3 real critique rounds); word
+illustrations for the 23 highest-priority curriculum words (291 of 314
+total words still use the themed-letter fallback - real, not hidden);
+a redesigned practice screen (word-card hero, grapheme highlighting,
+attempt-driven progress, distinct non-punitive treatment for each of the
+4 verdict states); a redesigned home map (fixed two real layout bugs,
+added locked/current/completed level states, chaptered into named
+worlds); four selectable themes with programmatically-verified contrast
+and app-wide reduced-motion support; and a therapist view with a review
+queue, per-phoneme stats, and a calibration tab (the last of which is
+mock-only pending a backend route that doesn't exist yet).
+
+**Two real bugs found by testing rather than assumed away, left
+unfixed and documented rather than silently patched around, because
+fixing them means touching `backend/` after Part 1's freeze:**
+1. `backend/db.get_or_create_user` has a TOCTOU race condition - two
+   concurrent requests for the same brand-new user_id (which React
+   StrictMode's double-effect-invocation triggers on literally every
+   first login in dev, and which a double-tap or multi-tab open could
+   trigger in production) crash one of the two requests with a 500
+   (`sqlite3.IntegrityError: UNIQUE constraint failed: users.id`).
+   Reproduced cleanly with two concurrent curls. The app recovers - the
+   second request's data still renders correctly - so this is a
+   background error, not a visible break, but it's real and worth a
+   `SELECT ... ON CONFLICT DO NOTHING`-style fix.
+2. No API route exposes `backend/db.get_all_speaker_baselines()` - the
+   Calibration tab is built and works against a mock-only route; against
+   the real backend it degrades gracefully to "not available yet"
+   instead of erroring, but the real data isn't reachable until someone
+   adds the route.
+
+**Verified, not assumed:** zero console/page errors across every screen
+against the mock server; zero horizontal scroll at both 360px and 390px
+on every screen (Home, Practice in all 4 verdict states, Practice Tracks,
+Level Complete, Therapist Mode's 4 tabs); all 5 themes pass WCAG contrast
+at the threshold that actually applies to each pair (programmatic check,
+not eyeballed); `prefers-reduced-motion` verified to actually collapse
+every animation app-wide via computed-style inspection, not just "the CSS
+rule exists"; the full flow (login -> home -> practice -> word display)
+verified against the REAL backend, not just the mock, which is what
+surfaced bug #1 above.
+
+**Honestly still missing / deprioritized, not silently dropped:** 291 of
+314 curriculum words on the themed-letter fallback (tiers 2-4 word art,
+never started - time budget); mascot ear "floppiness" (logged in Part 3,
+not revisited); a texture/grain overlay (Part 7, deprioritized behind two
+real correctness bugs); per-theme rainbow colors on the home map (minor
+mismatch in the Space theme specifically); recording playback in the
+therapist queue (no audio is stored anywhere in this system, mock or
+real - shown as an honest disabled state).
 
 ## Part 3: Mascot (3 rounds, as required)
 
@@ -391,3 +457,67 @@ edit needs a restart, not just a save.
    Verified `document.documentElement.scrollWidth === innerWidth` (no
    horizontal scroll at all) at both 390px and the brief's stated 360px
    minimum, for both Home and Practice.
+
+## Part 9: Final pass
+
+**Composite screenshots** across every screen at 1280px and 390px (Home,
+Practice, Practice Tracks, Therapist Mode's 4 tabs, Level Complete,
+Mascot Lab, Word Art Lab) - most were already captured and reviewed
+individually as each part landed; this pass added the ones that hadn't
+been looked at yet this session (Practice Tracks, Level Complete) and one
+final side-by-side grid of Home+Practice at both widths together, which
+incidentally confirmed the locked/current/completed level states still
+read correctly as progress advances past level 1 (level 2 now shows
+unlocked-and-current with the flag, levels 3+ still locked) - not just in
+the fresh-user state every other screenshot this session happened to
+capture.
+
+**Verification checklist, each one actually run, not assumed:**
+- *Horizontal scroll at 360px/390px*: `document.documentElement.
+  scrollWidth === innerWidth` checked on every screen (Home, Practice in
+  all 4 verdict states, Practice Tracks, Level Complete, Therapist Mode's
+  4 tabs). All clean now - see Parts 5, 6, and 8 for the real overflow
+  bugs this caught and fixed along the way (none new this pass).
+- *Contrast*: `mock-server/check_contrast.mjs` (Part 7) - all 5 themes
+  pass the WCAG threshold that applies to each text/background pair.
+- *Reduced motion*: didn't just confirm the CSS rule exists - launched a
+  Playwright context with `reducedMotion: "reduce"` and read back
+  `getComputedStyle().animationDuration` on live elements (the map sun,
+  a sparkle, the current-level pulse): all collapse to ~0.01ms as
+  intended. Separately confirmed the mascot's own per-state reduced-motion
+  poses (Part 3) still resolve to distinct static transforms per state
+  under the same emulated setting - the app-wide kill switch added in
+  Part 7 doesn't fight the mascot's more nuanced per-state handling.
+- *Console errors*: zero `console.error`/`pageerror` events across every
+  screen and interaction path tested, against the mock server.
+- *Works against the real backend*: actually started `backend/main.py`
+  with `uvicorn` (not assumed from reading the code) and ran the frontend
+  against it. Login, Home (real level data, greeting, locked states),
+  Practice (real word/phonemes loading), and Therapist Mode all rendered
+  correctly. This is what surfaced the two real bugs in the summary at
+  the top of this file - a login race condition in `backend/db.py` and
+  the missing calibration route - both logged there rather than fixed,
+  since fixing either means editing `backend/` after Part 1's freeze.
+
+**Honest final critique, not smoothed over:**
+- The single biggest gap is real-word-art coverage: 291 of 314 curriculum
+  words still render a themed-letter fallback card, not an illustration.
+  This is the most visible unfinished piece of the whole run.
+- The mascot's ears read as upright rather than "floppy" as originally
+  asked (Part 3, not revisited since).
+- Part 7's "texture" (a paper-grain overlay) was never built - two real
+  correctness bugs (contrast failures, missing reduced-motion coverage)
+  took priority over that polish item, which was the right call given
+  limited time, but the texture itself is still just not there.
+- The Space theme's rainbow decoration uses fixed (non-themed) colors, a
+  minor visual mismatch (a bright rainbow in a night sky) not worth a
+  special-case fix given everything else that theme gets right.
+- Two real, reproduced-not-assumed backend bugs are documented but
+  intentionally NOT fixed (see the top-of-file summary) - this is a
+  deliberate scope decision under the brief's "don't touch backend/ after
+  Part 1" rule, not an oversight, but it means the app has one narrow,
+  real failure mode (a first-login race) that a human should decide
+  whether to fix before this ships anywhere real users would hit it.
+
+All 9 parts are committed (branch `rebuild`). This is the final commit of
+the overnight run.
