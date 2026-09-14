@@ -66,3 +66,41 @@ mounted at once rather than fired live on an actual attempt.
 
 Screenshots from all 3 rounds are in the session scratchpad, not committed
 (they're throwaway debug artifacts, not product assets).
+
+## Part 4: Word illustrations
+
+Built the real system (`frontend/src/assets/wordArt.jsx`: one inline SVG
+sprite, `<symbol>` per word, `<use>` to reference; `frontend/src/components/
+WordCard.jsx`: real art or a themed initial-letter fallback, never bare
+text) and illustrated **23 words** for real - the Level 1-3 concrete nouns
+(ball, bed, bus, cup, dog, door, duck, ham, hat, hen, man, map, moon, mud,
+mug, net, nose, pen, pig, pot, pup, top, web).
+
+**Deliberately not illustrated, and not a gap**: Level 1-3's abstract/
+function words (no, we, yes, wet, hop, yum) - there's nothing concrete to
+draw for these that a 4-year-old would recognize faster than the printed
+word itself; a forced literal icon would be worse than the themed fallback
+card. Tiers 2-4 (R/S practice tracks, levels 4-8, everything else) were not
+started this run - 291 of 314 total distinct words across `levels.json` +
+`practice_tracks.json` currently render the fallback card
+(`node mock-server/check_word_art.mjs` to regenerate this count/list).
+
+**Two real bugs caught by building `/word-art-lab` and actually looking**,
+not just described from writing the code:
+1. `mud` was listed in `WORD_ART_COVERAGE` but I never wrote its `<symbol>`
+   - rendered as a blank card. Added the missing symbol (a puddle + splash
+   dots).
+2. The fallback letter was nearly invisible - `font-size: 40%` in CSS
+   resolves against the INHERITED font-size, not the card's own pixel
+   size, so a 140px card's letter was rendering at ~6px. Fixed by sizing
+   the letter from the actual `size` prop in JS instead of a CSS percentage.
+
+**Honest quality note, not smoothed over**: reviewing the composite image,
+`dog` reads more like a monkey (ear shape/brown tone), `pup` is a bit
+indistinct, `net` doesn't clearly read as a fishing/butterfly net (comes
+across as a striped funnel), and `top` (the spinning toy) reads more like a
+carrot than a toy. `ham` is recognizable but weak. These are the icons I'd
+redraw first if continuing - listed here rather than left for someone else
+to discover. `ball, bed, bus, cup, door, duck, hat, hen, pen, pig, man, map,
+moon, mug, nose, web` read clearly and are the icons I'd point to as the
+actual target quality bar.

@@ -4,6 +4,8 @@ import * as api from "./lib/api";
 import { setMockDetected } from "./lib/mockControl";
 import MockStatusBar from "./dev/MockStatusBar";
 import MascotLab from "./dev/MascotLab";
+import WordArtLab from "./dev/WordArtLab";
+import WordArtSprite from "./assets/wordArt";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import WordPractice from "./pages/WordPractice";
@@ -67,9 +69,13 @@ export default function App() {
   if (typeof window !== "undefined" && window.location.hash === "#mascot-lab") {
     return <MascotLab />;
   }
+  if (typeof window !== "undefined" && window.location.hash === "#word-art-lab") {
+    return <WordArtLab />;
+  }
 
   return (
     <AppProvider>
+      <WordArtSprite />
       <MockStatusBar />
       <Router />
     </AppProvider>
