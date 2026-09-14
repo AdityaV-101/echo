@@ -230,13 +230,12 @@ function PhonemeStatsTab({ phonemeErrors }) {
   );
 }
 
-// backend/db.py has get_all_speaker_baselines() (the per-speaker Welford
-// running mean/std that child_calibration.py's speaker-relative features
-// are built from) but main.py never exposes it over HTTP - out of scope to
-// add this run (backend/ is frozen after Part 1). api.getTherapistCalibration
-// degrades to null against the real backend rather than throwing, so this
-// renders an honest "not available yet" instead of breaking Part 9's
-// real-backend check.
+// backend/main.py exposes db.get_all_speaker_baselines() (the per-speaker
+// Welford running mean/std that child_calibration.py's speaker-relative
+// features are built from) at GET /api/therapist/calibration/:userId.
+// api.getTherapistCalibration still degrades to null on a fetch failure
+// rather than throwing, so a transient network error shows a clean
+// message instead of an error screen.
 function CalibrationTab({ userId }) {
   const [data, setData] = useState(undefined);
 
@@ -247,12 +246,7 @@ function CalibrationTab({ userId }) {
 
   if (data === undefined) return <p>Loading...</p>;
   if (data === null) {
-    return (
-      <p className="empty-state">
-        Calibration state isn't available yet - the backend tracks a running per-phoneme baseline per child
-        (`backend/db.py`'s speaker_baseline table) but doesn't expose it over the API yet.
-      </p>
-    );
+    return <p className="empty-state">Couldn't load calibration data - please try again.</p>;
   }
   const phonemes = Object.keys(data);
   if (phonemes.length === 0) {

@@ -142,6 +142,12 @@ def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # Without this, a connection that finds the database locked by another
+    # concurrent writer raises sqlite3.OperationalError immediately instead
+    # of waiting - a short wait is enough given each get_conn() block is a
+    # single short-lived write, and makes any concurrent-write path in this
+    # file (not just get_or_create_user's fix below) more robust.
+    conn.execute("PRAGMA busy_timeout = 5000")
     try:
         yield conn
         conn.commit()
@@ -168,15 +174,24 @@ def init_db():
 
 
 def get_or_create_user(user_id: str) -> dict:
+    """SELECT-then-INSERT used to race: two concurrent requests for the
+    same brand-new user_id (which React StrictMode's double-effect-
+    invocation triggers on every first login in dev, and a double-tap or
+    a second tab could trigger in production) could both see no row and
+    both attempt the INSERT, and the second raised
+    sqlite3.IntegrityError: UNIQUE constraint failed: users.id -
+    reproduced directly with two concurrent requests before this fix.
+    ON CONFLICT DO NOTHING makes the insert atomic and idempotent: if a
+    concurrent request already created the row, this one is a no-op
+    instead of an error, and the SELECT below always finds a row either
+    way."""
     with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO users (id, created_at, current_level, speak_aloud, speech_rate, app_speech_enabled, accent_tolerance_enabled) "
+            "VALUES (?, ?, 1, 1, 0.8, 1, 1) ON CONFLICT (id) DO NOTHING",
+            (user_id, now_iso()),
+        )
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-        if row is None:
-            conn.execute(
-                "INSERT INTO users (id, created_at, current_level, speak_aloud, speech_rate, app_speech_enabled, accent_tolerance_enabled) "
-                "VALUES (?, ?, 1, 1, 0.8, 1, 1)",
-                (user_id, now_iso()),
-            )
-            row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         return dict(row)
 
 

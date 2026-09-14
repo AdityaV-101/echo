@@ -213,6 +213,18 @@ def therapist_top_k(k: int = 25, user_id: str | None = None):
     return db.get_top_k_by_probability(k, user_id)
 
 
+@app.get("/api/therapist/calibration/{user_id}")
+def therapist_calibration(user_id: str):
+    """This child's running per-phoneme baseline (child_calibration.py's
+    Welford mean/std of GOP scores, updated after every scored attempt in
+    decision.decide) - what their speaker-relative features are computed
+    against. db.get_all_speaker_baselines already existed; this route
+    (added after the frontend's therapist view was built against a
+    mock-only stand-in - see frontend/DESIGN_NOTES.md's Part 8/Part 9
+    notes) is the only piece that was missing."""
+    return db.get_all_speaker_baselines(user_id)
+
+
 @app.get("/api/phoneme-lookup")
 def phoneme_lookup(word: str):
     phonemes = canonical_phonemes_for_word(word)

@@ -521,3 +521,32 @@ capture.
 
 All 9 parts are committed (branch `rebuild`). This is the final commit of
 the overnight run.
+
+## Post-run: both documented backend bugs fixed
+
+Corrected after review: the "don't touch backend/" freeze covers the
+frozen model/features/thresholds (`eval/phase3_protocol.md`'s modeling
+freeze), not the entire `backend/` directory - neither bug below touches
+any of that, so both were fixed rather than left as documented-but-broken.
+
+**Login race condition**, `backend/db.get_or_create_user`: was a plain
+SELECT-then-INSERT, racy under two concurrent requests for the same
+brand-new user_id. Fixed with `INSERT ... ON CONFLICT (id) DO NOTHING`
+(atomic, idempotent) followed by the SELECT. Also added
+`PRAGMA busy_timeout = 5000` to `get_conn()` so any concurrent-write path
+in this file waits briefly instead of raising `database is locked`
+immediately. Verified by firing 5 pairs of genuinely concurrent first-
+login requests (10 requests total, 5 brand-new user_ids) at the real
+backend: 10/10 returned 200, zero errors in the server log - the same
+test that produced a 500 before the fix.
+
+**Missing calibration route**: added `GET /api/therapist/calibration/
+{user_id}` to `backend/main.py`, wrapping the `db.get_all_speaker_
+baselines()` that already existed. Verified against the real backend:
+the Therapist Mode Calibration tab now renders "No calibration data yet"
+(the correct empty state) instead of the old "not available yet" 404
+fallback. Updated the stale "doesn't exist yet" comments in `api.js`,
+`TherapistMode.jsx`, and the mock server (which keeps its own simulated
+route for dev/screenshot review - fabricating plausible baseline numbers
+for phonemes a mock user has never really attempted, which the real
+route correctly won't do).

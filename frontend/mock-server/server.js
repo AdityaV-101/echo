@@ -319,14 +319,13 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, ranked);
     }
 
-    // MOCK-ONLY: there is no real /api/therapist/calibration route -
-    // backend/db.py has get_all_speaker_baselines() but main.py never
-    // exposes it over HTTP, and backend/ is frozen for the rest of this
-    // overnight run (see frontend/DESIGN_NOTES.md Part 8). The frontend
-    // calls this route with a try/catch that degrades gracefully to "not
-    // available" against the real backend, which will 404 here-shaped
-    // request today. This lets the UI be built and reviewed now without
-    // requiring a backend change that's out of scope for this session.
+    // A real GET /api/therapist/calibration/:userId now exists too
+    // (backend/main.py, added post-Part-9), returning actual accumulated
+    // speaker_baseline rows. This mock version stays as its own simulated
+    // route rather than proxying the real shape 1:1, since it needs to
+    // fabricate plausible-looking baseline numbers for phonemes this mock
+    // user has never actually attempted (dev/screenshot review needs
+    // something to show even for a fresh mock user with no real history).
     if (req.method === "GET" && parts[0] === "api" && parts[1] === "therapist" && parts[2] === "calibration") {
       const userId = decodeURIComponent(parts[3] || "");
       const pe = phonemeErrorCounts.get(userId) || {};
