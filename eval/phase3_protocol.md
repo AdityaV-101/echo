@@ -23,6 +23,20 @@ apply that SAME resample to both scorers, take
 baseline on the child slice only when the 95% CI of delta has a lower bound
 > 0.**
 
+**Superseding update, after the within-phoneme test (see RESULTS.md):**
+the pooled child-slice delta above includes between-phoneme discrimination
+the product cannot use - Echo always knows the target phoneme in advance,
+so telling an R-attempt from an M-attempt is not a task the deployed
+system ever performs. **The criterion now applies to the Echo-curriculum-
+weighted WITHIN-phoneme delta**, computed by `eval/phase3_within_phoneme.py`,
+not the pooled number. Measured result: ΔPR-AUC = +0.042, 95% CI
+[-0.085, +0.148] - **does not currently meet the criterion** (CI crosses
+zero). The pooled delta (+0.136, [+0.069, +0.224]) is retained only as a
+secondary, explicitly-labeled line - it is real, but it is not evidence the
+product's actual task improved. See RESULTS.md's within-phoneme section for
+the full breakdown and the data-coverage problem behind it (only 3 of 23
+curriculum phonemes have enough data to measure within-phoneme at all).
+
 ### Re-testing the Phase 1 retraction under the correct test
 
 The marginal-CI comparison (child: 0.120 [0.039, 0.212] vs 0.077
