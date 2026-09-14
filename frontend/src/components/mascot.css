@@ -1,66 +1,252 @@
+/* Echo's rig. transform-origin is set inline per SVG group (in the .jsx,
+   in user-space units) - here we only need transform-box so those origins
+   apply to each element's own geometry rather than the whole SVG viewport. */
 .mascot-wrap {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
 }
 
-/* Soft static glow behind the mark so it reads as a brand emblem rather
-   than a flat sticker. Color shifts with state; nothing here animates. */
-.mascot-wrap::before {
-  content: "";
+.mascot {
+  overflow: visible;
+  display: block;
+}
+
+/* transform-box: view-box (NOT fill-box) is what makes the inline
+   transform-origin values in Mascot.jsx (e.g. "64px 222px") mean "this
+   literal SVG user-space coordinate" - fill-box instead interprets a
+   pixel transform-origin as an OFFSET FROM EACH ELEMENT'S OWN BOUNDING
+   BOX, which sends every rotation/scale off to the wrong place (caught
+   directly in round 1's screenshot: the arm rendered as a detached blob
+   nowhere near the body, and the celebrating body appeared to vanish -
+   both were this same bug, not a drawing error). */
+#mascot-rig,
+#body, #head, #ear-l, #ear-r, #arm-l, #arm-r,
+#eye-l, #eye-r, #pupil-l, #pupil-r, #lid-l, #lid-r, #mouth {
+  transform-box: view-box;
+}
+
+/* --- palette: warm coral/amber, set once here so every theme can override
+   just these custom properties without touching the rig --- */
+:root {
+  --mascot-body: #ff9d6c;
+  --mascot-belly: #ffcda3;
+  --mascot-ear-inner: #ff7a4d;
+  --mascot-outline: #7a3a1e;
+  --mascot-eye-white: #fffaf3;
+  --mascot-iris: #4a3428;
+  --mascot-pupil: #1a1108;
+  --mascot-mouth-inner: #c85a4a;
+  --mascot-blush: #ff6b6b;
+  --mascot-shadow: rgba(60, 30, 10, 0.22);
+  --mascot-ring: #ffd166;
+}
+
+/* ============ mouth shapes: one path per state, cross-faded ============ */
+.mouth-shape { opacity: 0; transition: opacity 0.18s ease; }
+.mouth-shape--idle { opacity: 1; }
+
+.mascot-wrap--listening .mouth-shape--idle { opacity: 0; }
+.mascot-wrap--listening .mouth-shape--o { opacity: 1; }
+
+.mascot-wrap--encouraging .mouth-shape--idle,
+.mascot-wrap--celebrating .mouth-shape--idle { opacity: 0; }
+.mascot-wrap--encouraging .mouth-shape--smile,
+.mascot-wrap--celebrating .mouth-shape--smile { opacity: 1; }
+
+.mascot-wrap--demonstrating .mouth-shape--idle { opacity: 0; }
+.mascot-wrap--demonstrating .mouth-shape--demonstrate {
+  opacity: 1;
+  animation: mouth-demonstrate 1.6s cubic-bezier(0.34, 1.2, 0.64, 1) infinite;
+}
+@keyframes mouth-demonstrate {
+  0%, 100% { transform: scaleY(0.5); }
+  50% { transform: scaleY(1.15); }
+}
+
+.mascot-wrap--speaking .mouth-shape--idle { opacity: 0; }
+.mascot-wrap--speaking .mouth-shape--o {
+  opacity: 1;
+  animation: mouth-speak 0.42s steps(2, jump-end) infinite;
+}
+@keyframes mouth-speak {
+  0%, 100% { transform: scaleY(0.4) scaleX(1); }
+  50% { transform: scaleY(1) scaleX(0.85); }
+}
+
+/* ============ eyes: happy arcs replace the lid+iris during celebration === */
+.happy-arc { opacity: 0; }
+.mascot-wrap--celebrating .happy-arc { opacity: 1; }
+.mascot-wrap--celebrating #pupil-l,
+.mascot-wrap--celebrating #pupil-r,
+.mascot-wrap--celebrating circle[id^="eye-"] { opacity: 0; }
+.mascot-wrap--celebrating #eye-l circle:first-of-type,
+.mascot-wrap--celebrating #eye-r circle:first-of-type { opacity: 0; }
+
+/* ============ blink (idle/listening/thinking/encouraging) ============ */
+#lid-l, #lid-r { transform: scaleY(0.04); transition: transform 0.08s ease; }
+.mascot-wrap--blink #lid-l,
+.mascot-wrap--blink #lid-r { transform: scaleY(1); }
+
+/* ============ IDLE: breathing loop + occasional single-ear twitch ====== */
+.mascot-wrap--idle #body {
+  animation: breathe 3s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.mascot-wrap--idle #ear-r {
+  animation: ear-twitch 6.5s ease-in-out infinite;
+}
+@keyframes ear-twitch {
+  0%, 92%, 100% { transform: rotate(0deg); }
+  94% { transform: rotate(-6deg); }
+  96% { transform: rotate(3deg); }
+  98% { transform: rotate(0deg); }
+}
+
+/* ============ LISTENING: lean forward, ears cup toward mic ============= */
+.mascot-wrap--listening #mascot-rig {
+  animation: lean-forward 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes lean-forward {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(3px) rotate(1.5deg); }
+}
+.mascot-wrap--listening #ear-l { transform: rotate(-18deg) scale(1.03); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.mascot-wrap--listening #ear-r { transform: rotate(18deg) scale(1.03); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.mascot-wrap--listening #pupil-l,
+.mascot-wrap--listening #pupil-r { transform: scale(1.14); transition: transform 0.3s ease; }
+
+.mascot-amplitude-ring {
   position: absolute;
-  inset: -12%;
+  top: 38%;
+  left: 50%;
+  width: 76%;
+  height: 76%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(31, 138, 87, 0.24) 0%, rgba(31, 138, 87, 0) 70%);
-  z-index: -1;
-}
-.mascot-wrap--celebrating::before {
-  background: radial-gradient(circle, rgba(255, 201, 77, 0.38) 0%, rgba(255, 201, 77, 0) 70%);
-}
-.mascot-wrap--listening::before {
-  background: radial-gradient(circle, rgba(34, 201, 184, 0.32) 0%, rgba(34, 201, 184, 0) 70%);
-}
-.mascot-wrap--encouraging::before {
-  background: radial-gradient(circle, rgba(255, 184, 77, 0.3) 0%, rgba(255, 184, 77, 0) 70%);
+  border: 4px solid var(--mascot-ring);
+  transform: translate(-50%, -50%);
+  opacity: 0.55;
+  pointer-events: none;
+  transition: transform 0.08s ease-out;
 }
 
-/* Listening: a single static ring, not a pulse - it marks the state
-   without asking the mark itself to move. */
-.mascot-listening-ring {
-  position: absolute;
-  inset: -6%;
-  border-radius: 50%;
-  border: 3px solid var(--color-secondary);
-  opacity: 0.6;
+/* ============ THINKING: ears droop, eyes glance up/side, gentle bob ==== */
+.mascot-wrap--thinking #ear-l { transform: rotate(14deg) translateY(4px); transition: transform 0.4s ease; }
+.mascot-wrap--thinking #ear-r { transform: rotate(-8deg) translateY(6px); transition: transform 0.4s ease; }
+.mascot-wrap--thinking #mascot-rig { animation: bob 1.8s ease-in-out infinite; }
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.mascot-wrap--thinking #pupil-l,
+.mascot-wrap--thinking #pupil-r {
+  transform: translate(3px, -4px);
+  transition: transform 0.4s ease;
 }
 
-/* --- Celebrating: a one-shot confetti burst. Particles, not the mark. --- */
+/* ============ CELEBRATING: jump, squash/stretch, arms up, overshoot ==== */
+.mascot-wrap--celebrating #mascot-rig {
+  animation: celebrate-jump 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes celebrate-jump {
+  0% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(calc(-1 * var(--celebrate-jump, 22px))) rotate(var(--celebrate-tilt, -4deg)); }
+  55% { transform: translateY(calc(-1 * var(--celebrate-jump, 22px))) rotate(var(--celebrate-tilt, -4deg)); }
+  78% { transform: translateY(6px) rotate(0deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+.mascot-wrap--celebrating #body {
+  animation: celebrate-squash 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes celebrate-squash {
+  0% { transform: scale(1, 1); }
+  15% { transform: scale(1.12, 0.85); }
+  35% { transform: scale(0.92, 1.12); }
+  78% { transform: scale(1.08, 0.9); }
+  100% { transform: scale(1, 1); }
+}
+.mascot-wrap--celebrating #arm-l {
+  transform: rotate(var(--celebrate-arm-spread, 34deg)) translateY(-6px);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mascot-wrap--celebrating #arm-r {
+  transform: rotate(calc(-1 * var(--celebrate-arm-spread, 34deg))) translateY(-6px);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mascot-wrap--celebrating #ear-l { transform: rotate(-10deg); transition: transform 0.3s ease; }
+.mascot-wrap--celebrating #ear-r { transform: rotate(10deg); transition: transform 0.3s ease; }
+
 .confetti-piece {
+  animation: confetti-fall 1.3s ease-out forwards;
   transform-box: fill-box;
-  transform-origin: 50% 50%;
-  animation-duration: 0.9s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
-  animation-name: confettiFly;
+  transform-origin: center;
+}
+@keyframes confetti-fall {
+  /* opacity gets its own late-only drop, deliberately decoupled from the
+     ease-out timing function driving translateY/rotate below - ease-out
+     front-loads motion, which was ALSO front-loading the opacity fade
+     (confirmed by instrumenting a live page: opacity was already ~0.1 at
+     100ms into a 1300ms animation) and making confetti vanish almost
+     immediately instead of visibly falling. */
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateY(140px) rotate(340deg); opacity: 0; }
+}
+.confetti-piece-0 { animation-delay: 0s; }
+.confetti-piece-1 { animation-delay: 0.05s; }
+.confetti-piece-2 { animation-delay: 0.1s; }
+.confetti-piece-3 { animation-delay: 0.02s; }
+.confetti-piece-4 { animation-delay: 0.08s; }
+.confetti-piece-5 { animation-delay: 0.14s; }
+.confetti-piece-6 { animation-delay: 0.04s; }
+.confetti-piece-7 { animation-delay: 0.11s; }
+.confetti-piece-8 { animation-delay: 0.06s; }
+.confetti-piece-9 { animation-delay: 0.16s; }
+.confetti-piece-10 { animation-delay: 0.03s; }
+.confetti-piece-11 { animation-delay: 0.12s; }
+.confetti-piece-12 { animation-delay: 0.07s; }
+.confetti-piece-13 { animation-delay: 0.15s; }
+.confetti-piece-14 { animation-delay: 0.09s; }
+.confetti-piece-15 { animation-delay: 0.13s; }
+
+/* ============ ENCOURAGING: head tilt, soft smile, one arm reaching ===== */
+/* Serves BOTH "unclear" and "wrong" per the hard product rule: there is no
+   sad/failed state anywhere in this file. No red, no X, no frown. */
+.mascot-wrap--encouraging #head {
+  transform: rotate(-6deg);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mascot-wrap--encouraging #arm-l {
+  transform: rotate(28deg) translate(-4px, -2px);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mascot-wrap--encouraging #ear-l { transform: rotate(-6deg); transition: transform 0.35s ease; }
+.mascot-wrap--encouraging #ear-r { transform: rotate(4deg); transition: transform 0.35s ease; }
+
+/* ============ DEMONSTRATING: front-facing, ears forward, slow mouth ==== */
+.mascot-wrap--demonstrating #ear-l { transform: rotate(-4deg) scale(1.02); transition: transform 0.3s ease; }
+.mascot-wrap--demonstrating #ear-r { transform: rotate(4deg) scale(1.02); transition: transform 0.3s ease; }
+.mascot-wrap--demonstrating #mascot-rig { animation: demonstrate-bob 1.6s ease-in-out infinite; }
+@keyframes demonstrate-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
 
-@keyframes confettiFly {
-  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) rotate(540deg); opacity: 0; }
+/* ============ reduced motion: every loop stops, states still differ === */
+@media (prefers-reduced-motion: reduce) {
+  .mascot-wrap * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .mascot-wrap--listening #ear-l { transform: rotate(-18deg); }
+  .mascot-wrap--listening #ear-r { transform: rotate(18deg); }
+  .mascot-wrap--thinking #ear-l { transform: rotate(14deg); }
+  .mascot-wrap--thinking #ear-r { transform: rotate(-8deg); }
+  .mascot-wrap--encouraging #head { transform: rotate(-6deg); }
+  .mascot-wrap--encouraging #arm-l { transform: rotate(28deg); }
+  .mascot-wrap--celebrating #arm-l { transform: rotate(var(--celebrate-arm-spread, 34deg)); }
+  .mascot-wrap--celebrating #arm-r { transform: rotate(calc(-1 * var(--celebrate-arm-spread, 34deg))); }
+  .confetti-piece { opacity: 1; animation: none !important; }
 }
-
-.confetti-piece-0 { --dx: 60px; --dy: -10px; }
-.confetti-piece-1 { --dx: 50px; --dy: -40px; animation-delay: 0.03s; }
-.confetti-piece-2 { --dx: 20px; --dy: -65px; animation-delay: 0.06s; }
-.confetti-piece-3 { --dx: -15px; --dy: -68px; animation-delay: 0.02s; }
-.confetti-piece-4 { --dx: -45px; --dy: -50px; animation-delay: 0.08s; }
-.confetti-piece-5 { --dx: -62px; --dy: -15px; animation-delay: 0.01s; }
-.confetti-piece-6 { --dx: -65px; --dy: 20px; animation-delay: 0.05s; }
-.confetti-piece-7 { --dx: -45px; --dy: 50px; animation-delay: 0.07s; }
-.confetti-piece-8 { --dx: -15px; --dy: 68px; animation-delay: 0.04s; }
-.confetti-piece-9 { --dx: 20px; --dy: 65px; animation-delay: 0.09s; }
-.confetti-piece-10 { --dx: 50px; --dy: 40px; animation-delay: 0.02s; }
-.confetti-piece-11 { --dx: 65px; --dy: 10px; animation-delay: 0.06s; }
-.confetti-piece-12 { --dx: 35px; --dy: -30px; animation-delay: 0.03s; }
-.confetti-piece-13 { --dx: -30px; --dy: 35px; animation-delay: 0.05s; }
