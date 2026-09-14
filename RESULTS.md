@@ -4,6 +4,128 @@ Every number below was produced by running the script named next to it -
 none are estimates. Re-run the named script if the underlying cache
 changes and re-paste.
 
+## Part 1: Held-out test-split evaluation (final, single run)
+
+`eval/run_test_eval.py`, run once. Speechocean762's own official TEST
+partition (125 speakers) - distinct from the 125 subtrain+dev speakers the
+frozen model was trained on (checked directly: zero speaker-id overlap
+between `eval/speaker_split.json` and `eval/speechocean_test.jsonl`). No
+prior phase touched this data in any way - no tuning happens in this
+section either. This runs the exact shipped pipeline: `backend/
+recording_gate.py`'s usable-recording gate, then the frozen Phase 3
+classifier (`backend/data/phase3_model/`, loaded exactly as `backend/
+decision.py` loads it) at the shipped thresholds (T_CORRECT=0.10,
+T_ERROR=0.71 - the child-facing, precision>=0.5-constrained point).
+
+**A real bug found and fixed while building this script, not before:**
+`backend/decision.py`'s naming rule was setting `heard` (the substitution
+named to the child) from `pos.llr_best_origin`, which is a CATEGORY string
+("canonical", a phonological-process name like "stopping"/"fronting", or
+"deletion" - see `llr_scorer.py`'s `_substitutions_for`), never an actual
+ARPABET phoneme. It could never equal a ground-truth `pronounced_phone`,
+so `substitution_naming_accuracy` was structurally ~0% by construction on
+first run (confirmed: 0.0% across all three slices), not a real
+measurement of anything. Root-caused and fixed to use `pos.top_competitor`
+instead (`features.py`'s `_gop_and_lpr`: "the single most plausible
+alternative reading of this span" - an actual ARPABET label), with
+`llr_best_origin` still used to decide *whether* to name anything at all
+(no naming when the local evidence's best explanation is "canonical" - no
+alternative-candidate evidence - or "deletion" - no specific substitution
+to name). Re-run after the fix: naming accuracy 0.0% -> 63.3%/76.7%/76.9%
+across the three slices below. This is a `backend/` fix made during Part 1
+(before the "don't touch backend/" freeze that starts with Part 2); no
+number anywhere in this document before this section depended on it -
+`substitution_naming_accuracy` was never previously reported in this file.
+
+**Recording gate:** 97/15,967 words (0.6%) rejected as `unclear_recording`
+before any phoneme verdict - excluded from every metric below (their own
+band, same convention as the "ambiguous" label band).
+
+| slice | n_speakers | n (phoneme occurrences) | precision | recall | FRR | abstain rate | naming accuracy | PR-AUC | expected false corrections / 10-word session |
+|---|---|---|---|---|---|---|---|---|---|
+| all speakers | 125 | 40,439 | 0.758 [0.620, 0.853] | 0.272 [0.187, 0.340] | 0.0022 [0.0013, 0.0034] | 14.8% | 63.3% (n=147) | 0.402 [0.294, 0.490] | 0.0218 |
+| child | 64 | 18,515 | 0.667 [0.315, 0.824] | 0.216 [0.073, 0.340] | 0.0021 [0.0011, 0.0034] | 15.5% | 76.7% (n=30) | 0.289 [0.129, 0.416] | 0.0205 |
+| age<=9 | - | 9,406 | 0.679 [0.267, 0.846] | 0.275 [0.074, 0.426] | 0.0026 [0.0015, 0.0057] | 16.6% | 76.9% (n=26) | 0.349 [0.126, 0.509] | 0.0331 |
+
+95% CIs are speaker-clustered bootstrap (`bootstrap_ci_by_speaker`, n=2000),
+same methodology as every other CI in this document.
+
+**Honest comparison to the dev-split child-facing point** (the table in
+"Phase 5 operating points" above: recall=0.061 [0.019, 0.113],
+precision=0.500 [0.235, 0.732], at the same T_ERROR=0.71): test-split
+recall (0.216) sits clearly above the dev CI's upper bound, and precision
+(0.667) sits inside the dev CI. Two honest, non-mutually-exclusive reasons,
+neither of which is "the model got better" (nothing was tuned):
+(1) both are measured on genuinely small positive counts (dev child-facing
+recall's denominator was in the same tens-not-thousands range this project
+has flagged throughout) so a 3x swing on a point estimate is within the
+kind of sampling noise these CIs are wide specifically to warn about;
+(2) the dev-split number came from `eval/phase5_two_points.py`'s
+cross-validated out-of-fold scores (a fold-specific refit standing in for
+"how would an unseen speaker score"), while this section scores the actual
+shipped, frozen artifact (trained on all 125 pooled speakers) against
+speakers it has truly never seen - methodologically the single most
+trustworthy generalization number in this project, not necessarily
+expected to reproduce a CV proxy's point estimate exactly. Both slices
+clear FRR<<0.05 comfortably either way.
+
+**Within-phoneme table** (all-speakers slice, phonemes with >=10 positive
+tokens, 29 of 39 canonical phonemes qualify) - this is a per-phoneme
+breakdown of this one frozen scorer's test-split results (`harness.py`'s
+own `by_phoneme` accumulation), not a repeat of the earlier "within-phoneme
+evaluation" section's phoneme-identity-control methodology (that question -
+does the classifier carry acoustic skill beyond phoneme-identity - was
+already answered on dev data and stands as the project's real headline
+finding; this table is a transparency artifact for the final frozen
+scorer, not a new test of that question):
+
+| phone | n | n_pos | precision | recall | FRR | PR-AUC | abstain |
+|---|---|---|---|---|---|---|---|
+| AH | 3651 | 128 | 0.667 | 0.062 | 0.001 | 0.215 | 22.2% |
+| T | 3591 | 51 | 0.737 | 0.275 | 0.002 | 0.449 | 10.3% |
+| N | 2769 | 41 | 0.609 | 0.341 | 0.004 | 0.454 | 9.2% |
+| IH | 2687 | 43 | 0.643 | 0.209 | 0.002 | 0.364 | 14.6% |
+| S | 2027 | 38 | 0.781 | 0.658 | 0.004 | 0.599 | 6.2% |
+| D | 1610 | 26 | 0.769 | 0.385 | 0.002 | 0.435 | 13.8% |
+| L | 1604 | 43 | 0.667 | 0.186 | 0.003 | 0.375 | 15.2% |
+| IY | 1454 | 27 | 0.857 | 0.222 | 0.001 | 0.321 | 16.1% |
+| K | 1334 | 14 | 0.833 | 0.357 | 0.001 | 0.621 | 4.3% |
+| M | 1290 | 22 | 1.000 | 0.227 | 0.000 | 0.531 | 6.9% |
+| AE | 1282 | 29 | 0.667 | 0.069 | 0.001 | 0.273 | 19.8% |
+| DH | 1164 | 31 | 0.667 | 0.065 | 0.001 | 0.293 | 17.7% |
+| AY | 1128 | 22 | 1.000 | 0.227 | 0.000 | 0.505 | 17.1% |
+| HH | 1049 | 12 | 0.000 | 0.000 | 0.001 | 0.241 | 4.2% |
+| EH | 1048 | 27 | 0.778 | 0.259 | 0.003 | 0.478 | 34.5% |
+| R | 1022 | 31 | 0.818 | 0.290 | 0.003 | 0.391 | 23.2% |
+| UW | 832 | 19 | 1.000 | 0.158 | 0.000 | 0.269 | 16.3% |
+| F | 828 | 15 | 0.889 | 0.533 | 0.001 | 0.740 | 3.0% |
+| EY | 683 | 39 | 1.000 | 0.744 | 0.000 | 0.740 | 37.0% |
+| OW | 644 | 14 | nan | 0.000 | 0.000 | 0.181 | 31.2% |
+| ER | 609 | 27 | 0.800 | 0.148 | 0.002 | 0.309 | 27.3% |
+| AO | 579 | 17 | 0.750 | 0.176 | 0.003 | 0.388 | 30.2% |
+| Z | 534 | 36 | 0.636 | 0.583 | 0.033 | 0.551 | 24.7% |
+| V | 517 | 11 | 0.500 | 0.091 | 0.002 | 0.328 | 8.7% |
+| NG | 512 | 15 | 1.000 | 0.467 | 0.000 | 0.524 | 11.5% |
+| AA | 375 | 10 | 0.400 | 0.200 | 0.009 | 0.432 | 13.1% |
+| SH | 304 | 12 | 0.750 | 0.250 | 0.004 | 0.621 | 19.1% |
+| AW | 300 | 13 | 1.000 | 0.231 | 0.000 | 0.529 | 22.3% |
+| TH | 203 | 11 | 0.636 | 0.636 | 0.045 | 0.400 | 50.7% |
+
+`HH` (precision=recall=0.0, 12 positives, 0 caught) and `OW` (same
+pattern, 14 positives) are the two weakest-covered phonemes with enough
+data to say so plainly - not smoothed over. `TH`'s FRR (0.045) is the
+highest of any phoneme with a nontrivial count, close to the global
+FRR<=0.05 budget that was rejected as a selection rule in the Phase 5
+section above, for the same reason: it's one phoneme's worth of noise
+(n=203, only 89 negative tokens), not evidence of a systematic problem.
+Full per-phoneme breakdown for all three slices (including phonemes below
+the n>=10 filter, and both all-speakers/child/age<=9 versions) is in
+`eval/test_eval_final.json`.
+
+Data-access requests for PERCEPT-R, UltraSuite, and MyST (Phase 6's
+external-corpus validation, not run this session) are drafted in
+`eval/corpora.md`.
+
 ## Phase 5 operating points: two, not one - FRR budget replaced with a precision floor
 
 **The FRR<=0.05 selection rule itself was wrong at this base rate.** It

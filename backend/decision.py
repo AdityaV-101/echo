@@ -134,7 +134,24 @@ def decide(pos: PositionFeatures, word: WordFeatures, user_id: str) -> AttemptDe
     status = classify(p)
     # Naming rule: heard is only ever populated for "wrong" - never for
     # "unclear", which must stay a non-naming nudge.
-    heard = pos.llr_best_origin if status == "wrong" and pos.llr_best_origin != "canonical" else None
+    #
+    # BUG FIX (found while building eval/run_test_eval.py for the overnight
+    # run's Part 1): this used to be
+    #   heard = pos.llr_best_origin if status == "wrong" and pos.llr_best_origin != "canonical" else None
+    # but llr_best_origin is a CATEGORY - "canonical", a phonological-
+    # process name ("stopping"/"fronting"/etc, see llr_scorer.py's
+    # _substitutions_for), or "deletion" - never an ARPABET phoneme. It can
+    # never equal a ground-truth pronounced_phone, so substitution_naming_
+    # accuracy was measuring something that was structurally ~0% by
+    # construction, not a real result - see RESULTS.md. top_competitor
+    # (features.py's _gop_and_lpr: "the single most plausible alternative
+    # reading of this span") is the field that actually names a phoneme.
+    if status != "wrong" or pos.llr_best_origin == "canonical":
+        heard = None  # no naming: either not "wrong", or no local alternative-candidate evidence
+    elif pos.llr_best_origin == "deletion":
+        heard = None  # predicted an omission, not a specific substitution
+    else:
+        heard = pos.top_competitor
 
     db.record_attempt_history(user_id, pos.expected, status, p)
     update_baselines(user_id, pos.expected, _raw_relative_inputs(pos))
