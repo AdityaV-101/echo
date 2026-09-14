@@ -1,5 +1,31 @@
 # Phase 3 protocol (locked in before any classifier is trained)
 
+## MODELING FREEZE - 2026-09-13
+
+**No further feature engineering, hyperparameter search, or threshold
+tuning against `eval/speaker_split.json`'s dev/subtrain pool from this date
+forward.** With only 3 child phonemes measurable within-phoneme (R, T, N)
+and a weighted delta whose 95% CI crosses zero ([-0.085, +0.148] - see
+RESULTS.md), any further tuning against this dev set is fitting noise, not
+signal: the confidence intervals are wide enough that a change which
+happens to move the point estimate positive after this point would not be
+distinguishable from chance. The all-speakers/L2 diagnostic (RESULTS.md)
+confirms the feature set itself is not the problem - it discriminates
+clearly once there's enough data (weighted delta +0.123, CI
+[+0.055, +0.199], several individual phonemes clearing a zero-excluding
+CI on their own) - so the correct response to an inconclusive child result
+is "get more child data" (PERCEPT-R), not "keep adjusting the model against
+the data already in hand."
+
+The frozen artifacts, as committed at this date: `backend/llr_scorer.py`,
+`backend/features.py`, the feature set and preprocessing in
+`eval/phase3_common.py` (numeric features, categorical features,
+`MISSING_SENTINEL`), and the selected model class (logistic regression,
+`class_weight=None` per the calibration finding, per-fold `StandardScaler`).
+Phases 4 and 5 proceed using these frozen artifacts and the measurements
+already made - they do not re-open model selection.
+
+
 Written in response to review feedback on Phase 0, before touching a
 classifier. Every number cited here comes from `eval/baselines.json` /
 `eval/phase1_check.json` after the `harness.py` refactor that added raw

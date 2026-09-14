@@ -1,0 +1,278 @@
+{
+ "population": "all_speakers (L2 adults + children pooled) - NOT clinical, see module docstring",
+ "min_positives": 30,
+ "per_phoneme_table": {
+  "N": {
+   "n": 2735,
+   "n_pos": 162,
+   "prevalence": 0.05923217550274223,
+   "candidate_pr_auc": 0.5609731884957696,
+   "baseline_pr_auc": 0.4324926556526303,
+   "delta": 0.12848053284313932,
+   "candidate_lift": 9.470751052690925,
+   "baseline_lift": 7.301650698826814,
+   "delta_lift": 2.1691003538641116,
+   "included": true,
+   "ci": [
+    0.04428042186407871,
+    0.23523668430110628
+   ]
+  },
+  "S": {
+   "n": 1923,
+   "n_pos": 78,
+   "prevalence": 0.0405616224648986,
+   "candidate_pr_auc": 0.5547035644465471,
+   "baseline_pr_auc": 0.4814726260364122,
+   "delta": 0.0732309384101349,
+   "candidate_lift": 13.675576338855258,
+   "baseline_lift": 11.87015204959001,
+   "delta_lift": 1.8054242892652486,
+   "included": true,
+   "ci": [
+    -0.04625706649683481,
+    0.19914389702086832
+   ]
+  },
+  "D": {
+   "n": 1570,
+   "n_pos": 119,
+   "prevalence": 0.07579617834394904,
+   "candidate_pr_auc": 0.5355596666114717,
+   "baseline_pr_auc": 0.38116846784642533,
+   "delta": 0.15439119876504637,
+   "candidate_lift": 7.06578719815135,
+   "baseline_lift": 5.0288612984780485,
+   "delta_lift": 2.036925899673301,
+   "included": true,
+   "ci": [
+    0.04489783095597466,
+    0.24738128473538185
+   ]
+  },
+  "M": {
+   "n": 1322,
+   "n_pos": 62,
+   "prevalence": 0.046898638426626324,
+   "candidate_pr_auc": 0.42678744019491155,
+   "baseline_pr_auc": 0.4317249972917962,
+   "delta": -0.004937557096884648,
+   "candidate_lift": 9.100209611897952,
+   "baseline_lift": 9.205491071286364,
+   "delta_lift": -0.10528145938841137,
+   "included": true,
+   "ci": [
+    -0.17032964080080903,
+    0.16826886257182483
+   ]
+  },
+  "L": {
+   "n": 1574,
+   "n_pos": 102,
+   "prevalence": 0.06480304955527319,
+   "candidate_pr_auc": 0.4249310682779313,
+   "baseline_pr_auc": 0.27158162821111564,
+   "delta": 0.15334944006681567,
+   "candidate_lift": 6.557269622249646,
+   "baseline_lift": 4.190877282395059,
+   "delta_lift": 2.366392339854587,
+   "included": true,
+   "ci": [
+    0.05022686442991259,
+    0.27390883079093675
+   ]
+  },
+  "T": {
+   "n": 3661,
+   "n_pos": 200,
+   "prevalence": 0.054629882545752524,
+   "candidate_pr_auc": 0.4801356303168244,
+   "baseline_pr_auc": 0.22597407890108004,
+   "delta": 0.25416155141574437,
+   "candidate_lift": 8.788882712949471,
+   "baseline_lift": 4.13645551428427,
+   "delta_lift": 4.652427198665201,
+   "included": true,
+   "ci": [
+    0.18810987321602426,
+    0.30320674601995584
+   ]
+  },
+  "R": {
+   "n": 1098,
+   "n_pos": 107,
+   "prevalence": 0.09744990892531877,
+   "candidate_pr_auc": 0.5566613036213638,
+   "baseline_pr_auc": 0.294890012421269,
+   "delta": 0.2617712912000948,
+   "candidate_lift": 5.712281414731377,
+   "baseline_lift": 3.026067604098629,
+   "delta_lift": 2.6862138106327484,
+   "included": true,
+   "ci": [
+    0.10312312755856126,
+    0.413975723762627
+   ]
+  },
+  "K": {
+   "n": 1305,
+   "n_pos": 44,
+   "prevalence": 0.03371647509578544,
+   "candidate_pr_auc": 0.5605521186074944,
+   "baseline_pr_auc": 0.5350888476276807,
+   "delta": 0.025463270979813712,
+   "candidate_lift": 16.625466245063187,
+   "baseline_lift": 15.870248776230078,
+   "delta_lift": 0.7552174688331114,
+   "included": true,
+   "ci": [
+    -0.074017060739756,
+    0.17337885293323818
+   ]
+  },
+  "V": {
+   "n": 543,
+   "n_pos": 33,
+   "prevalence": 0.06077348066298342,
+   "candidate_pr_auc": 0.5538807343483955,
+   "baseline_pr_auc": 0.3575382623918409,
+   "delta": 0.19634247195655458,
+   "candidate_lift": 9.113855719732689,
+   "baseline_lift": 5.883129590265746,
+   "delta_lift": 3.2307261294669436,
+   "included": true,
+   "ci": [
+    -0.05980506516870421,
+    0.39115823718628934
+   ]
+  },
+  "DH": {
+   "n": 1198,
+   "n_pos": 67,
+   "prevalence": 0.055926544240400666,
+   "candidate_pr_auc": 0.2823672201883482,
+   "baseline_pr_auc": 0.22609001343000468,
+   "delta": 0.05627720675834352,
+   "candidate_lift": 5.048894474412554,
+   "baseline_lift": 4.042624419240979,
+   "delta_lift": 1.0062700551715753,
+   "included": true,
+   "ci": [
+    -0.035884918597559434,
+    0.15462036224825115
+   ]
+  },
+  "NG": {
+   "n": 495,
+   "n_pos": 47,
+   "prevalence": 0.09494949494949495,
+   "candidate_pr_auc": 0.6600016153214936,
+   "baseline_pr_auc": 0.5970653961347304,
+   "delta": 0.06293621918676318,
+   "candidate_lift": 6.95108084221573,
+   "baseline_lift": 6.288241938014714,
+   "delta_lift": 0.6628389042010164,
+   "included": true,
+   "ci": [
+    -0.0967764724429882,
+    0.23001714910197046
+   ]
+  },
+  "W": {
+   "n": 1520,
+   "n_pos": 60,
+   "prevalence": 0.039473684210526314,
+   "candidate_pr_auc": 0.3522106839741288,
+   "baseline_pr_auc": 0.357637542026693,
+   "delta": -0.00542685805256421,
+   "candidate_lift": 8.92267066067793,
+   "baseline_lift": 9.060151064676223,
+   "delta_lift": -0.1374804039982933,
+   "included": true,
+   "ci": [
+    -0.1443740881272908,
+    0.15616013065411904
+   ]
+  },
+  "Z": {
+   "n": 518,
+   "n_pos": 83,
+   "prevalence": 0.16023166023166024,
+   "candidate_pr_auc": 0.703707101603391,
+   "baseline_pr_auc": 0.6410034202551249,
+   "delta": 0.0627036813482661,
+   "candidate_lift": 4.39181058591032,
+   "baseline_lift": 4.000479177013911,
+   "delta_lift": 0.39133140889640766,
+   "included": true,
+   "ci": [
+    -0.01771717433490627,
+    0.1484314612789852
+   ]
+  },
+  "TH": {
+   "n": 161,
+   "n_pos": 44,
+   "prevalence": 0.2732919254658385,
+   "candidate_pr_auc": 0.713072074463676,
+   "baseline_pr_auc": 0.6200272859541549,
+   "delta": 0.09304478850952114,
+   "candidate_lift": 2.6091955451966324,
+   "baseline_lift": 2.2687362054231577,
+   "delta_lift": 0.34045933977347503,
+   "included": true,
+   "ci": [
+    -0.03918853392680227,
+    0.206408439965726
+   ]
+  }
+ },
+ "requested_not_qualifying": [
+  "CH",
+  "SH"
+ ],
+ "extra_qualifying": [
+  "D",
+  "M",
+  "NG",
+  "W"
+ ],
+ "weighted_aggregate": {
+  "weighted_delta": 0.12272044111617049,
+  "weighted_delta_lift": 1.5936395062097266,
+  "total_weight_covered": 291,
+  "total_weight_all": 390,
+  "coverage_fraction": 0.7461538461538462,
+  "phonemes_used": [
+   "D",
+   "DH",
+   "K",
+   "L",
+   "M",
+   "N",
+   "NG",
+   "R",
+   "S",
+   "T",
+   "TH",
+   "V",
+   "W",
+   "Z"
+  ],
+  "phonemes_missing_from_data": [
+   "SH",
+   "CH",
+   "P",
+   "G",
+   "F",
+   "B",
+   "JH",
+   "Y",
+   "HH"
+  ]
+ },
+ "weighted_aggregate_ci_95": [
+  0.05476681278908021,
+  0.1986108216800483
+ ]
+}

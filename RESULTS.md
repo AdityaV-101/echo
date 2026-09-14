@@ -53,6 +53,61 @@ PERCEPT-R (Prompt 1's Phase 6 pediatric validation corpus) - getting that
 corpus is now higher priority than further pooled-model tuning, which
 would be optimizing a number the product can't use.
 
+## Diagnostic: does the feature set discriminate within-phoneme at all, when data isn't the limit?
+
+The child-only within-phoneme test above is confounded with a data problem
+(only 3 phonemes measurable). To separate "the features don't work" from
+"there isn't enough child data to see it work," `eval/phase3_within_phoneme_l2.py`
+re-runs the identical within-phoneme test on the **all-speakers slice**
+(children + speechocean762's adult L2 English speakers), where positive
+counts per phoneme are large enough to measure reliably. **This is
+explicitly not a clinical measurement** - speechocean762's adult speakers
+are non-native L2 speakers, and their mispronunciation patterns (accent/
+phonological-transfer driven) are a different error-generating process
+than developmental child articulation errors. It answers one narrower,
+purely methodological question: is this feature set structurally capable
+of within-phoneme discrimination at all.
+
+14 of Echo's curriculum phonemes clear 30 positives at the all-speakers
+level (74.6% of curriculum weight) - two requested phonemes did not (SH:
+24 positives, CH: 10) and are reported as not qualifying rather than forced
+into the table:
+
+| phone | n_pos | delta PR-AUC | 95% CI | echo weight |
+|---|---|---|---|---|
+| T | 200 | +0.254 | [+0.188, +0.303] | 5 |
+| R | 107 | +0.262 | [+0.103, +0.414] | 57 |
+| D | 119 | +0.154 | [+0.045, +0.247] | 5 |
+| L | 102 | +0.153 | [+0.050, +0.274] | 45 |
+| N | 162 | +0.129 | [+0.044, +0.235] | 4 |
+| V | 33 | +0.196 | [-0.060, +0.391] | 4 |
+| TH | 44 | +0.093 | [-0.039, +0.206] | 37 |
+| S | 78 | +0.073 | [-0.046, +0.199] | 51 |
+| Z | 83 | +0.063 | [-0.018, +0.148] | 35 |
+| NG | 47 | +0.063 | [-0.097, +0.230] | 2 |
+| DH | 67 | +0.056 | [-0.036, +0.155] | 3 |
+| K | 44 | +0.026 | [-0.074, +0.173] | 36 |
+| M | 62 | -0.005 | [-0.170, +0.168] | 5 |
+| W | 60 | -0.005 | [-0.144, +0.156] | 2 |
+
+**Echo-weighted aggregate: ΔPR-AUC = +0.123, 95% CI [+0.055, +0.199].
+Clearly positive - does not cross zero.**
+
+**Conclusion, stated as one of the two options with no hedge: (a) the
+features work within-phoneme; child data is the binding constraint.**
+Several individual phonemes clear a zero-excluding CI on their own (T, R,
+D, L, N), and the weighted aggregate does too. The feature set is not
+structurally incapable of within-phoneme discrimination - it discriminates
+clearly once there's enough data to show it. The reason the child-only
+within-phoneme test came back inconclusive (CI [-0.085, +0.148]) is that
+only 3 phonemes had enough child positives to measure, not that the
+underlying signal doesn't exist. **This changes the highest-value next
+step: it is not "redesign the features," it is "get more child data for
+the phonemes Echo actually teaches"** - PERCEPT-R (R misarticulation,
+Prompt 1's Phase 6 corpus) is the most direct path, since R is both a
+headline clinical target and one of the phonemes already showing the
+clearest effect here.
+
 ## Ablations: phoneme dummies moved things moderately, not decisively
 
 `eval/phase3_ablations.py`, direct follow-up to the within-phoneme result.
