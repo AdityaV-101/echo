@@ -120,6 +120,34 @@ def _fmt_ci(name: str, point: float, ci: tuple[float, float]) -> str:
     return f"{name}={point:.3f} [{ci[0]:.3f}, {ci[1]:.3f}]"
 
 
+def _row_key(r: dict) -> tuple:
+    return (r["utt_id"], r["word_index"], r["index"])
+
+
+def _coerce_unclear_to_correct(rows: list[dict]) -> list[dict]:
+    """"Abstentions counted as misses": an unclear call on a true error
+    becomes a miss (FN); an unclear call on a true correct is harmless
+    (TN) - both are what treating "unclear" as a non-flag ("correct") for
+    confusion-matrix purposes produces. Only hypothesis_lambda0 ever emits
+    "unclear" - this is a no-op for the other two baselines."""
+    return [dict(r, status="correct") if r["status"] == "unclear" else r for r in rows]
+
+
+def _report_table(rows_by_baseline: dict[str, list[dict]], label: str, n_boot: int) -> dict:
+    print(f"  --- {label} ---")
+    table = {}
+    for baseline_name, rows in rows_by_baseline.items():
+        labeled_rows = [r for r in rows if r["label"] is not None]
+        result = evaluate_from_rows(rows)
+        ci = bootstrap_ci_by_speaker(labeled_rows, metric_names=CI_METRICS, n_boot=n_boot, seed=0)
+        result["ci_by_speaker_95"] = {k: list(v) for k, v in ci.items()}
+        table[baseline_name] = result
+        print(f"  {format_overall(baseline_name, result['overall'])}")
+        ci_str = "  ".join(_fmt_ci(m, result["overall"][m], ci[m]) for m in CI_METRICS)
+        print(f"     95% CI (bootstrap by speaker, n_boot={n_boot}): {ci_str}")
+    return table
+
+
 def main(n_boot: int = 2000):
     records = load_dev_cache()
     print(f"Loaded {len(records)} dev-split words "
@@ -129,17 +157,24 @@ def main(n_boot: int = 2000):
     report = {}
     for slice_name, slice_filter in SLICES.items():
         print(f"=== slice: {slice_name} ===")
-        report[slice_name] = {}
-        for baseline_name, predict_fn in BASELINES.items():
-            rows = flatten_rows(records, predict_fn, slice_filter=slice_filter)
-            labeled_rows = [r for r in rows if r["label"] is not None]
-            result = evaluate_from_rows(rows)
-            ci = bootstrap_ci_by_speaker(labeled_rows, metric_names=CI_METRICS, n_boot=n_boot, seed=0)
-            result["ci_by_speaker_95"] = {k: list(v) for k, v in ci.items()}
-            report[slice_name][baseline_name] = result
-            print(format_overall(baseline_name, result["overall"]))
-            ci_str = "  ".join(_fmt_ci(m, result["overall"][m], ci[m]) for m in CI_METRICS)
-            print(f"   95% CI (bootstrap by speaker, n_boot={n_boot}): {ci_str}")
+
+        full_rows = {name: flatten_rows(records, fn, slice_filter=slice_filter) for name, fn in BASELINES.items()}
+
+        # hypothesis_lambda0 is the only baseline that abstains - the
+        # "common coverage" population is wherever IT has a definitive
+        # call, applied identically to every baseline so the denominator
+        # (70/2321 on the child slice, not 92/3016) is the same for all three.
+        covered_keys = {_row_key(r) for r in full_rows["hypothesis_lambda0"] if r["status"] != "unclear"}
+        common_rows = {name: [r for r in rows if _row_key(r) in covered_keys] for name, rows in full_rows.items()}
+
+        # PR-AUC/precision/recall across different denominators is not
+        # comparable - report both tables explicitly, never just one.
+        common_table = _report_table(common_rows, f"common coverage subset (n={len(covered_keys)}, all 3 scorers give a definitive call)", n_boot)
+
+        full_coerced_rows = {name: _coerce_unclear_to_correct(rows) for name, rows in full_rows.items()}
+        full_table = _report_table(full_coerced_rows, "full set, abstentions counted as misses (same denominator for all 3)", n_boot)
+
+        report[slice_name] = {"common_coverage_subset": common_table, "full_set_abstentions_as_miss": full_table}
         print()
 
     out_path = EVAL_DIR / "baselines.json"

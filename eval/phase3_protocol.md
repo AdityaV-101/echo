@@ -6,29 +6,47 @@ classifier. Every number cited here comes from `eval/baselines.json` /
 counts and speaker-clustered bootstrap CIs - re-run these scripts if the
 dev cache ever changes and re-paste the numbers here.
 
-## Success criterion
+## Success criterion (corrected)
 
-**Metric: PR-AUC (average precision) on the child slice, with a 95%
-bootstrap CI resampled by speaker (`harness.bootstrap_ci_by_speaker`).**
+**Comparing two independently-computed marginal CIs is not a valid test of
+"does A beat B" when both are scored on the same data - their sampling
+noise is correlated (same speakers, same recordings, same label noise), and
+a marginal-CI comparison throws that shared structure away.** The original
+version of this criterion did exactly that and is wrong; replaced with a
+**paired bootstrap on the difference** (`harness.paired_bootstrap_delta`,
+`eval/paired_significance_tests.py`): resample speakers once per iteration,
+apply that SAME resample to both scorers, take
+`delta = candidate_PR_AUC - gop_zscore_PR_AUC` on each resample. Report the
+95% CI of delta and the fraction of resamples with delta > 0.
 
-| model | PR-AUC | 95% CI |
-|---|---|---|
-| always-correct (floor) | 0.030 | [0.011, 0.055] |
-| GOP z-score (current best baseline) | 0.077 | [0.039, 0.133] |
-| hypothesis scorer (λ=0) | 0.047 | [0.019, 0.091] |
-| Phase 1 naive (llr>0, no calibration) | 0.120 | [0.039, 0.212] |
+**Criterion: Phase 3's classifier counts as beating the GOP z-score
+baseline on the child slice only when the 95% CI of delta has a lower bound
+> 0.**
 
-Phase 3's classifier is judged against **0.077** (GOP z-score). It counts
-as beating the baseline only when its child-slice PR-AUC's 95% CI does not
-overlap the GOP z-score CI's upper bound (0.133) - i.e. its lower CI bound
-must exceed 0.133. A higher point estimate whose CI overlaps 0.077's
-interval is reported as "not distinguishable from the current baseline at
-this sample size," not as a win. Note already-visible from this table:
-Phase 1's own naive-rule point estimate (0.120) looked like a large
-improvement over GOP z-score before computing a CI; its actual CI
-([0.039, 0.212]) overlaps GOP z-score's almost entirely. That comparison is
-retracted as unsupported - stated here so the same mistake isn't repeated
-for Phase 3's model.
+### Re-testing the Phase 1 retraction under the correct test
+
+The marginal-CI comparison (child: 0.120 [0.039, 0.212] vs 0.077
+[0.039, 0.133], near-total overlap) led to retracting Phase 1's "55% better
+than GOP z-score" claim as unsupported. Re-tested with the paired bootstrap
+(`eval/paired_significance_tests.py`), which removes the noise the two
+scorers share instead of double-counting it:
+
+| slice | delta (phase1 - gop_zscore) | 95% CI | P(delta>0) | verdict |
+|---|---|---|---|---|
+| all speakers | +0.0062 | [-0.0232, +0.0400] | 68.2% | does not beat baseline |
+| child | +0.0435 | [-0.0054, +0.0838] | 95.5% | does not beat baseline (barely - lower bound just below 0) |
+| age<=9 | +0.0542 | [+0.0004, +0.1006] | 98.2% | **beats baseline** |
+
+**Recorded outcome, both directions stated plainly:** the correct test is
+more favorable to Phase 1 than the (wrong) marginal comparison suggested -
+on the age<=9 slice specifically, Phase 1's naive rule does show a
+statistically supported improvement over GOP z-score (lower CI bound just
+above 0, +0.0004 - a real but thin margin). On the broader child slice
+(ages 6-15) it falls just short (lower bound -0.0054, 95.5% of resamples
+still favor Phase 1). On all speakers, no support either way. The blanket
+retraction was too strong; the corrected, precise statement is: **not
+supported on the broad child slice, supported (thinly) on age<=9
+specifically.**
 
 **Model/hyperparameter selection never uses F1.** F1 is a function of
 precision and recall at whatever operating threshold is implicit in a

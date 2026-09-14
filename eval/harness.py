@@ -288,6 +288,72 @@ def bootstrap_ci_by_speaker(
     return ci
 
 
+def paired_bootstrap_delta(
+    rows_a: list[dict],
+    rows_b: list[dict],
+    metric_name: str = "pr_auc",
+    n_boot: int = 2000,
+    seed: int = 0,
+) -> dict:
+    """Is scorer A actually better than scorer B, on the SAME data?
+    Comparing two independently-computed marginal CIs is not a test of
+    difference (their sampling noise is correlated - both are scored
+    against the same speakers, same recordings, same label noise, and a
+    marginal CI throws that shared structure away). The correct test
+    resamples speakers ONCE per iteration and applies that SAME resample to
+    both scorers, so whatever noise they share cancels in the difference.
+
+    rows_a and rows_b must come from the same underlying records (same
+    speakers) - only their predictions differ. Returns the point-estimate
+    delta (on the real, non-resampled data), its bootstrap 95% CI, and the
+    fraction of resamples with delta > 0 (a bootstrap-based one-sided
+    p-value proxy: beating the baseline means this fraction is close to 1
+    and the CI's lower bound is > 0)."""
+    by_speaker_a: dict[str, list[dict]] = {}
+    for row in rows_a:
+        by_speaker_a.setdefault(row["speaker"], []).append(row)
+    by_speaker_b: dict[str, list[dict]] = {}
+    for row in rows_b:
+        by_speaker_b.setdefault(row["speaker"], []).append(row)
+
+    speakers_a = set(by_speaker_a.keys())
+    speakers_b = set(by_speaker_b.keys())
+    if speakers_a != speakers_b:
+        raise ValueError(
+            "paired_bootstrap_delta requires rows_a and rows_b to share the same speaker set "
+            f"(same underlying records, different predictions) - got {len(speakers_a)} vs {len(speakers_b)} speakers, "
+            f"symmetric difference: {speakers_a ^ speakers_b}"
+        )
+    speakers = list(speakers_a)
+    n_sp = len(speakers)
+
+    point_a = _accumulate(rows_a).metrics()[metric_name]
+    point_b = _accumulate(rows_b).metrics()[metric_name]
+    point_delta = point_a - point_b if (point_a == point_a and point_b == point_b) else float("nan")
+
+    rng = random.Random(seed)
+    deltas = []
+    for _ in range(n_boot):
+        drawn = [speakers[rng.randrange(n_sp)] for _ in range(n_sp)]
+        boot_a, boot_b = [], []
+        for sp in drawn:
+            boot_a.extend(by_speaker_a[sp])
+            boot_b.extend(by_speaker_b[sp])
+        ma = _accumulate(boot_a).metrics()[metric_name]
+        mb = _accumulate(boot_b).metrics()[metric_name]
+        if ma == ma and mb == mb:
+            deltas.append(ma - mb)
+
+    if not deltas:
+        return {"point_delta": point_delta, "ci": (float("nan"), float("nan")), "frac_positive": float("nan"), "n_boot_valid": 0}
+
+    deltas.sort()
+    lo = deltas[max(0, int(0.025 * len(deltas)))]
+    hi = deltas[min(len(deltas) - 1, int(0.975 * len(deltas)))]
+    frac_positive = sum(1 for d in deltas if d > 0) / len(deltas)
+    return {"point_delta": point_delta, "ci": (lo, hi), "frac_positive": frac_positive, "n_boot_valid": len(deltas)}
+
+
 def format_overall(name: str, m: dict) -> str:
     return (
         f"{name:28} n={m['n_total']:5} P={m['n_positive']:4} N={m['n_negative']:4} base_rate={m['base_rate']:.1%} "

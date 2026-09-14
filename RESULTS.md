@@ -38,58 +38,90 @@ messages are wrong. This is why k-of-n evidence aggregation was evaluated
 before, not after, Phase 3 - if it doesn't work, that changes what "success"
 even means for the classifier.
 
-## k-of-n evidence aggregation: real vs assumed (`eval/measure_k_of_n.py`)
+## k-of-n evidence aggregation: underpowered and misdiagnosed, not negative
+
+**Correction to an earlier version of this section**, which called the
+result below "negative" - that overstated what n=4 can actually show, and
+skipped the diagnostic that explains what's really going on.
 
 The independence-assumed prediction (`backend.aggregation.binomial_at_least_k`,
 verified against the reviewer's own worked numbers: 2-of-3 at per-attempt
 FRR=5% -> 0.73% aggregate FRR, at per-attempt recall=50% -> 50% aggregate
 recall - both match) says 2-of-3 aggregation should cut false alarms sharply
-while leaving recall roughly unchanged. **Measured on real dev data
+while leaving recall roughly unchanged. Measured on real dev data
 (GOP z-score baseline's actual per-attempt calls, grouped by (speaker,
-canonical phone), non-overlapping windows of 3), that is not what happens:**
+canonical phone), non-overlapping windows of 3), the child slice showed
+recall collapsing to 0% on its 4 aggregated-positive windows, against an
+independence-predicted ~46.7%.
 
-| slice | | single-attempt | 2-of-3 (real) | 2-of-3 (independence theory) |
-|---|---|---|---|---|
-| all speakers | precision | 23.8% [12.8, 34.8] | 15.5% [6.0, 26.9] | - |
-| | recall | 46.5% [38.9, 56.0] | 35.0% [24.3, 49.1] | 44.8% |
-| | FRR | 18.5% [16.3, 20.5] | 16.8% [14.3, 19.2] | 9.0% |
-| child | precision | 6.2% [2.3, 11.0] | **0.0% [0.0, 0.0]** (n_pos=4) | - |
-| | recall | 46.7% [40.0, 51.0] | **0.0% [0.0, 0.0]** (n_pos=4) | 45.0% |
-| | FRR | 19.9% [16.9, 22.6] | 18.4% [15.6, 21.4] | 10.3% |
+**Why 0-of-4 is not evidence the true rate is 0%:** at the predicted
+per-window recall of 0.467, `P(observe 0 hits in 4 independent trials) =
+(1-0.467)^4 ≈ 8.1%` - an 8% event is unlikely, not essentially impossible.
+Four trials cannot distinguish a true recall of 47% from a true recall of
+0%. The child-slice k-of-n result is **underpowered**, not a demonstrated
+failure - stated plainly because the earlier framing didn't make this
+distinction and shouldn't have called it settled.
 
-(95% CIs bootstrapped by speaker in brackets.)
+**The diagnostic that actually matters** (`eval/diagnose_dispersion.py`):
+are GOP z-score's false alarms on true-correct child productions scattered
+independently across speakers, or systematically worse for some children
+than others? Per-speaker false-alarm rate (FP / true-correct-tokens) for
+the 11 child-slice speakers with at least one true-correct token, compared
+against the binomial-expected variance `p(1-p)/n_i` at the pooled rate
+p_hat=20.5%:
 
-**This is the opposite of the hoped-for result.** On the child slice, every
-one of the 4 windows where the child truly had a persistent problem (>=2 of
-3 true errors) was missed entirely by 2-of-3 aggregation - recall collapsed
-to 0%, not the ~45% independence would predict. FRR did improve, but far
-less than theory predicts (18.4% real vs 10.3% theoretical), and on the
-all-speakers slice precision went DOWN under aggregation (23.8% -> 15.5%),
-not up.
+| speaker | n | false alarms | rate |
+|---|---|---|---|
+| 0048 | 172 | 48 | 27.9% |
+| 0056 | 219 | 56 | 25.6% |
+| 8585 | 323 | 82 | 25.4% |
+| 0104 | 266 | 61 | 22.9% |
+| 9556 | 361 | 81 | 22.4% |
+| 5414 | 267 | 57 | 21.3% |
+| 3088 | 229 | 45 | 19.7% |
+| 3020 | 286 | 55 | 19.2% |
+| 5408 | 361 | 68 | 18.8% |
+| 1435 | 261 | 41 | 15.7% |
+| 0006 | 271 | 24 | **8.9%** |
 
-**Reading this honestly:** the GOP z-score baseline's per-attempt "wrong"
-calls are not landing on the true-positive windows with any consistency -
-its false positives are scattered across many different (speaker, phone)
-pairs rather than concentrated, so requiring 2-of-3 agreement mostly
-filters out isolated true positives along with the false ones. Attempts are
-evidently NOT close to independent in the direction the design change
-hoped for, at least not for this scorer. Two things are also true that cut
-against over-interpreting this as final: (1) the aggregated-ground-truth
-population is tiny (n_pos=4 for the child slice) - this measurement itself
-has a wide, mostly-unknown uncertainty band despite the CI reading as a
-tight [0%, 0%] (that tightness is an artifact of tp=0 in every bootstrap
-resample, not evidence of a precisely-known 0% rate); (2) this was measured
-against the GOP z-score baseline specifically, chosen because it is the
-best already-computed scorer - a properly trained Phase 3 classifier, whose
-errors may correlate differently with the underlying acoustic evidence,
-could behave differently. **The mechanism (`backend/aggregation.py`) is
-implemented and ready, but this measurement does not currently support
-shipping k-of-n aggregation as a precision fix.** Re-measure against the
-Phase 3 classifier once it exists, on more data (subtrain+dev pooled) if
-the child-slice window count is still too small, before deciding whether to
-rely on it.
+Pearson's chi-squared statistic for k proportions sharing one rate:
+**X² = 43.13, df = 10, overdispersion ratio X²/df = 4.31, p ≈ 4.7×10⁻⁶.**
+A ratio this far above 1 (four times the variance binomial sampling alone
+would produce) means false alarms are **speaker-systematic**: speaker 0048
+gets falsely flagged more than 3x as often as speaker 0006, consistently,
+not as a run of bad luck. This is the direct explanation for why 2-of-3
+aggregation didn't behave as the independence assumption predicted -
+windows aren't independent draws when some speakers carry a persistently
+higher false-alarm rate than others, and it means **per-speaker calibration
+(Phase 5, not yet built) is the highest-value remaining lever**, likely
+ahead of a better population-level classifier on its own.
+
+**Action, not a verdict:** the k-of-n mechanism (`backend/aggregation.py`)
+is implemented and correct (verified against the reviewer's own worked
+arithmetic). It is not being shipped or ruled out from this measurement -
+it gets re-measured once Phase 5's per-speaker calibration exists (which
+this diagnostic says should reduce exactly the systematic component that
+broke the independence assumption here), and on more data (subtrain+dev
+pooled) if the child-slice window count is still too small at that point.
 
 ## Phase 0 baselines (child / age<=9), with raw counts and 95% CIs
+
+**Correction:** the hypothesis-scorer baseline abstains on ~23% of tokens;
+its precision/recall/PR-AUC were originally reported on a 70/2321
+(child) denominator while the other two baselines used 92/3016 - not
+comparable, and the earlier single table invited exactly the wrong read.
+`eval/baselines.json` now reports every baseline **twice**, per slice:
+`common_coverage_subset` (all three scorers restricted to positions where
+the abstaining scorer gives a definitive call - the fair like-for-like
+comparison) and `full_set_abstentions_as_miss` (the full labeled
+population, with an abstention on a true error coerced to a miss and an
+abstention on a true correct coerced to a harmless non-flag - the
+comparable-denominator table to use going forward). PR-AUC barely moves
+between the two framings (it uses continuous scores regardless of the
+coerced status); precision/recall/FRR/FAR do move, most visibly
+hypothesis_lambda0's child-slice recall (50.0% restricted-to-coverage vs
+38.0% full-set-as-miss) - the coverage-restricted number alone would have
+overstated it.
 
 See `eval/phase3_protocol.md` for the full success-criterion table this
 feeds into. Full breakdown (all slices, all metrics, per-phoneme/per-position)
