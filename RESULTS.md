@@ -43,31 +43,61 @@ band, same convention as the "ambiguous" label band).
 
 | slice | n_speakers | n (phoneme occurrences) | precision | recall | FRR | abstain rate | naming accuracy | PR-AUC | expected false corrections / 10-word session |
 |---|---|---|---|---|---|---|---|---|---|
-| all speakers | 125 | 40,439 | 0.758 [0.620, 0.853] | 0.272 [0.187, 0.340] | 0.0022 [0.0013, 0.0034] | 14.8% | 63.3% (n=147) | 0.402 [0.294, 0.490] | 0.0218 |
-| child | 64 | 18,515 | 0.667 [0.315, 0.824] | 0.216 [0.073, 0.340] | 0.0021 [0.0011, 0.0034] | 15.5% | 76.7% (n=30) | 0.289 [0.129, 0.416] | 0.0205 |
-| age<=9 | - | 9,406 | 0.679 [0.267, 0.846] | 0.275 [0.074, 0.426] | 0.0026 [0.0015, 0.0057] | 16.6% | 76.9% (n=26) | 0.349 [0.126, 0.509] | 0.0331 |
+| all speakers | 125 | 40,439 | 0.758 [0.620, 0.853] | 0.272 [0.187, 0.340] | 0.0022 [0.0013, 0.0034] | 14.8% | 0.633 [0.506, 0.735] (n=147) | 0.402 [0.294, 0.490] | 0.0218 |
+| child | 64 | 18,515 | 0.667 [0.315, 0.824] | 0.216 [0.073, 0.340] | 0.0021 [0.0011, 0.0034] | 15.5% | 0.767 [0.333, 1.000] (n=30) | 0.289 [0.129, 0.416] | 0.0205 |
+| age<=9 | - | 9,406 | 0.679 [0.267, 0.846] | 0.275 [0.074, 0.426] | 0.0026 [0.0015, 0.0057] | 16.6% | 0.769 [0.200, 1.000] (n=26) | 0.349 [0.126, 0.509] | 0.0331 |
 
 95% CIs are speaker-clustered bootstrap (`bootstrap_ci_by_speaker`, n=2000),
-same methodology as every other CI in this document.
+same methodology as every other CI in this document. The naming-accuracy
+CIs are as wide as they look: at n=30 and n=26 naming events, the interval
+spans a third-to-all-of-the-range (child: [0.333, 1.000]; age<=9: [0.200,
+1.000]) - the 76.7%/76.9% point estimates are real but should not be read
+as more precise than that. Only the all-speakers slice (n=147) has a
+usably tight interval (0.633 [0.506, 0.735]).
 
-**Honest comparison to the dev-split child-facing point** (the table in
-"Phase 5 operating points" above: recall=0.061 [0.019, 0.113],
-precision=0.500 [0.235, 0.732], at the same T_ERROR=0.71): test-split
-recall (0.216) sits clearly above the dev CI's upper bound, and precision
-(0.667) sits inside the dev CI. Two honest, non-mutually-exclusive reasons,
-neither of which is "the model got better" (nothing was tuned):
-(1) both are measured on genuinely small positive counts (dev child-facing
-recall's denominator was in the same tens-not-thousands range this project
-has flagged throughout) so a 3x swing on a point estimate is within the
-kind of sampling noise these CIs are wide specifically to warn about;
-(2) the dev-split number came from `eval/phase5_two_points.py`'s
-cross-validated out-of-fold scores (a fold-specific refit standing in for
-"how would an unseen speaker score"), while this section scores the actual
-shipped, frozen artifact (trained on all 125 pooled speakers) against
-speakers it has truly never seen - methodologically the single most
-trustworthy generalization number in this project, not necessarily
-expected to reproduce a CV proxy's point estimate exactly. Both slices
-clear FRR<<0.05 comfortably either way.
+**Test is the primary figure here; the dev-split child-facing point
+(recall=0.061 [0.019, 0.113], precision=0.500 [0.235, 0.732], T_ERROR=0.71,
+reported in "Phase 5 operating points" above) is the development-time
+estimate it superseded, not a rival number to reconcile against.** Test's
+child slice carries 673 clear-error tokens and ~64 of them caught under a
+matched comparison (below); dev's child-facing point had 293 positives and
+18 caught. Test is the better-powered of the two, from a genuinely
+held-out population (125 speakers with zero overlap with the 125
+subtrain+dev speakers the frozen model trained on), and is the number that
+should be trusted going forward. Dev's point stands as what the modeling
+freeze was decided against, not as ongoing ground truth.
+
+**The 0.061 -> 0.216 recall move as originally read here overstated a real
+effect that is actually much smaller, because the two numbers were not
+computed the same way.** Dev's child-facing point (`eval/phase5_two_points.py`'s
+`evaluate_point`) has no abstain concept - every non-ambiguous attempt is
+a binary flagged/not-flagged call. This section's headline table, built on
+`harness.py`'s accumulator, excludes the `[T_CORRECT, T_ERROR)` abstain
+band from the recall denominator entirely - a different metric wearing the
+same name. Recomputed on the test child slice under dev's exact
+convention (binary threshold, no abstain exclusion, same population
+definition), with a speaker-clustered bootstrap CI:
+
+| | recall | FRR | precision | clear-error prevalence |
+|---|---|---|---|---|
+| dev child-facing point (development-time estimate) | 0.061 [0.019, 0.113] | 0.0011 | 0.500 | 1.78% (293/16,422) |
+| test child, matched convention (the correct comparison) | 0.095 [0.034, 0.149] | 0.0018 | 0.667 | 3.63% (673/18,515) |
+
+Recall is a property of the positive class - P(flagged \| actual error) -
+and has no dependence on how many negatives are in the population. Under
+the matched convention it moves from 0.061 to 0.095 with heavily
+overlapping CIs, and FRR moves from 0.0011 to 0.0018: both differences are
+indistinguishable from sampling noise at these positive counts. Precision,
+unlike recall, is exactly a function of prevalence given fixed recall/FRR
+(Bayes' theorem: `precision = recall*prevalence / (recall*prevalence +
+FRR*(1-prevalence))`), and it moves from 0.500 to 0.667 in lockstep with
+the measured prevalence change from 1.78% to 3.63% - plugging dev's own
+recall/FRR into that formula at test's prevalence predicts precision=0.675
+against a measured 0.667. The base-rate formula accounts for the precision
+shift exactly. There is no residual effect - in recall, FRR, or precision -
+that requires an explanation beyond "matched detection characteristics,
+applied to a population with a measurably different clear-error rate."
+Both slices clear FRR<<0.05 comfortably either way.
 
 **Within-phoneme table** (all-speakers slice, phonemes with >=10 positive
 tokens, 29 of 39 canonical phonemes qualify) - this is a per-phoneme

@@ -125,10 +125,13 @@ def main():
         rows = flatten_rows(records, predict_fn, slice_filter)
         result = evaluate_from_rows(rows)
         overall = result["overall"]
-        ci = bootstrap_ci_by_speaker(rows)
+        ci = bootstrap_ci_by_speaker(
+            rows, metric_names=("precision", "recall", "pr_auc", "frr", "far", "f1", "substitution_naming_accuracy"),
+        )
         efp10 = expected_false_per_10(overall)
         print(format_overall(name, overall))
         print(f"  95% CI: precision={ci['precision']} recall={ci['recall']} frr={ci['frr']} pr_auc={ci['pr_auc']}")
+        print(f"  naming accuracy 95% CI: {ci['substitution_naming_accuracy']}")
         print(f"  expected false corrections per 10-word session: {efp10:.4f}\n")
         return {
             "n_speakers": len({row["speaker"] for row in rows}),
