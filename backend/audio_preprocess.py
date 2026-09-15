@@ -6,6 +6,7 @@ used only for the one thing numpy can't do: decoding an arbitrary input
 container/codec (webm/opus from the browser's MediaRecorder, aiff from
 macOS `say` in testing, etc.) into raw PCM.
 """
+import json
 import logging
 import subprocess
 
@@ -108,3 +109,76 @@ def preprocess_audio(input_path: str) -> np.ndarray:
         logger.info("preprocess_audio: padded short clip to %.3fs (+%.3fs)", MIN_AUDIO_SECONDS, pad_total / TARGET_SAMPLE_RATE)
 
     return trimmed
+
+
+# --- Request-diagnostic helpers (Part 2 Step 1) -----------------------------
+# Pure instrumentation: describe_array/describe_received report on audio that
+# preprocess_audio already produced/consumed, and probe_container reads the
+# upload's own container metadata. None of this changes what preprocess_audio
+# does or returns - see scorer_phase3.py for how these get logged per request.
+
+def describe_array(audio: np.ndarray, sample_rate: int = TARGET_SAMPLE_RATE) -> dict:
+    """duration/rms/peak of an already-decoded array (e.g. preprocess_audio's
+    output) - the 'converted' half of the per-request diagnostic log."""
+    if len(audio) == 0:
+        return {"duration_s": 0.0, "rms": 0.0, "peak": 0.0, "sample_rate": sample_rate}
+    return {
+        "duration_s": round(len(audio) / sample_rate, 4),
+        "rms": round(float(np.sqrt(np.mean(audio.astype(np.float64) ** 2))), 6),
+        "peak": round(float(np.max(np.abs(audio))), 6),
+        "sample_rate": sample_rate,
+    }
+
+
+def probe_container(input_path: str) -> dict:
+    """ffprobe's view of the upload's own container/codec metadata, read
+    before any ffmpeg decode/resample touches it. Returns {} (logged, not
+    raised) if ffprobe can't read the file - this is diagnostic-only and must
+    never be able to fail a real scoring request."""
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe", "-v", "error", "-select_streams", "a:0",
+                "-show_entries", "stream=codec_name,sample_rate,channels",
+                "-show_entries", "format=duration",
+                "-of", "json",
+                input_path,
+            ],
+            capture_output=True, text=True, timeout=10,
+        )
+        info = json.loads(result.stdout) if result.stdout else {}
+        stream = (info.get("streams") or [{}])[0]
+        fmt = info.get("format") or {}
+        return {
+            "codec": stream.get("codec_name"),
+            "sample_rate": int(stream["sample_rate"]) if stream.get("sample_rate") else None,
+            "channels": stream.get("channels"),
+            "container_duration_s": float(fmt["duration"]) if fmt.get("duration") else None,
+        }
+    except Exception as e:  # noqa: BLE001 - diagnostic probe, never blocks scoring
+        logger.warning("probe_container: ffprobe failed for %s: %s", input_path, e)
+        return {}
+
+
+def describe_received(input_path: str) -> dict:
+    """The 'received' half of the per-request diagnostic log: the upload's
+    own codec/sample_rate/channels (via probe_container) plus duration/RMS
+    measured on a native-rate, mono-downmixed decode - deliberately NOT the
+    TARGET_SAMPLE_RATE resample _decode_to_pcm does, so this reflects what
+    the browser actually sent rather than what preprocess_audio turns it
+    into (that's describe_array's job, on preprocess_audio's actual output)."""
+    container = probe_container(input_path)
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", input_path, "-ac", "1", "-f", "f32le", "-"],
+            capture_output=True, timeout=10,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr[-500:].decode(errors="replace"))
+        native_sr = container.get("sample_rate") or TARGET_SAMPLE_RATE
+        audio = np.frombuffer(result.stdout, dtype=np.float32)
+        stats = describe_array(audio, sample_rate=native_sr)
+    except Exception as e:  # noqa: BLE001 - diagnostic probe, never blocks scoring
+        logger.warning("describe_received: native decode failed for %s: %s", input_path, e)
+        stats = {"duration_s": None, "rms": None, "peak": None, "sample_rate": container.get("sample_rate")}
+    return {**container, **stats}

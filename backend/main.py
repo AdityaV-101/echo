@@ -23,11 +23,18 @@ USE_PHASE3_SCORER = os.environ.get("USE_PHASE3_SCORER", "1") == "1"
 USE_REAL_SCORER = os.environ.get("USE_REAL_SCORER") == "1"
 if USE_PHASE3_SCORER:
     from scorer_phase3 import score_word
+    import child_calibration
+    import decision
 
     logger.info(
         "Using PHASE 3 scorer (paired-LLR/GOP features -> frozen classifier -> "
         "abstention-heavy decision, see eval/phase3_protocol.md). Set USE_PHASE3_SCORER=0 to opt out."
     )
+    # Force the frozen-artifact loads (and their hash/shape log lines - Part
+    # 1c found these were correct but silent) to happen now, at boot, rather
+    # than lazily on whichever request happens to be first.
+    decision.warm_up()
+    child_calibration.warm_up()
 elif USE_REAL_SCORER:
     from scorer import score_word
 

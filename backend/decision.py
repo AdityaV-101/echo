@@ -38,8 +38,10 @@ the previous FRR-budget point produced, is a design failure, not
 efficiency - every attempt resolving immediately means no room for "I'm
 not sure yet."
 """
+import hashlib
 import json
-from dataclasses import dataclass
+import logging
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import joblib
@@ -48,6 +50,8 @@ import numpy as np
 import db
 from child_calibration import RELATIVE_FEATURES, speaker_relative_features, update_baselines
 from features import PositionFeatures, WordFeatures
+
+logger = logging.getLogger("speechpal.decision")
 
 _MODEL_DIR = Path(__file__).parent / "data" / "phase3_model"
 _MODEL = None
@@ -59,14 +63,59 @@ T_CORRECT = 0.10
 T_ERROR = 0.71  # child-facing, naming-capable threshold - precision=0.500 at this point
 
 
+def _file_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+
+
+def warm_up() -> None:
+    """Public entry point for main.py to force the artifact-load logging to
+    happen at process boot rather than lazily on the first /api/score
+    request - Part 1c found the load itself was correct but silent, and a
+    load silently deferred to first-request is still effectively silent for
+    anyone watching boot logs to confirm the service came up cleanly."""
+    _load()
+
+
 def _load():
+    """Loads the four frozen Phase 3 artifacts once per process. Part 1c
+    (2026-09-15 diagnosis) found these load correctly but silently - nothing
+    confirmed it, which is exactly how a future silent fallback to an
+    untrained/default object would go unnoticed. Every load is now logged
+    with its file path, a content hash, and a one-line shape summary, so a
+    version mismatch or corrupted artifact is visible at boot, not inferred
+    later from bad scores."""
     global _MODEL, _SCALER, _ENCODER, _METADATA
     if _MODEL is None:
-        _MODEL = joblib.load(_MODEL_DIR / "model.joblib")
-        _SCALER = joblib.load(_MODEL_DIR / "scaler.joblib")
-        _ENCODER = joblib.load(_MODEL_DIR / "encoder.joblib")
-        with open(_MODEL_DIR / "metadata.json") as f:
+        model_path = _MODEL_DIR / "model.joblib"
+        scaler_path = _MODEL_DIR / "scaler.joblib"
+        encoder_path = _MODEL_DIR / "encoder.joblib"
+        metadata_path = _MODEL_DIR / "metadata.json"
+
+        _MODEL = joblib.load(model_path)
+        _SCALER = joblib.load(scaler_path)
+        _ENCODER = joblib.load(encoder_path)
+        with open(metadata_path) as f:
             _METADATA = json.load(f)
+
+        logger.info(
+            "phase3 classifier loaded: path=%s sha256=%s type=%s n_features_in_=%s classes_=%s",
+            model_path, _file_hash(model_path), type(_MODEL).__name__,
+            getattr(_MODEL, "n_features_in_", None), getattr(_MODEL, "classes_", None),
+        )
+        logger.info(
+            "phase3 scaler loaded: path=%s sha256=%s n_features_in_=%s",
+            scaler_path, _file_hash(scaler_path), getattr(_SCALER, "n_features_in_", None),
+        )
+        logger.info(
+            "phase3 encoder loaded: path=%s sha256=%s category_counts=%s (order=%s)",
+            encoder_path, _file_hash(encoder_path),
+            [len(c) for c in _ENCODER.categories_], _METADATA.get("categorical_features"),
+        )
+        logger.info(
+            "phase3 metadata loaded: path=%s sha256=%s frozen_date=%s n_training_rows=%s n_training_speakers=%s",
+            metadata_path, _file_hash(metadata_path), _METADATA.get("frozen_date"),
+            _METADATA.get("n_training_rows"), _METADATA.get("n_training_speakers"),
+        )
     return _MODEL, _SCALER, _ENCODER, _METADATA
 
 
@@ -76,20 +125,36 @@ class AttemptDecision:
     probability: float
     phoneme: str
     heard: str | None  # only ever set when status == "wrong" - the naming rule
+    explanation: "FeatureExplanation | None" = None
+
+
+@dataclass
+class FeatureExplanation:
+    """Everything Part 2 Step 1 needs logged about how one p was computed:
+    the raw feature values fed in, the same numeric block after the frozen
+    StandardScaler, the raw categorical values, and which calibration source
+    (this speaker's own running mean vs. the global fallback, with n) backed
+    each of the four speaker-relative features."""
+    raw: dict[str, float] = field(default_factory=dict)
+    scaled_numeric: dict[str, float] = field(default_factory=dict)
+    categorical: dict[str, str] = field(default_factory=dict)
+    calibration_sources: dict[str, dict] = field(default_factory=dict)
 
 
 def _raw_relative_inputs(pos: PositionFeatures) -> dict[str, float]:
     return {feat: getattr(pos, feat) for feat in RELATIVE_FEATURES}
 
 
-def compute_error_probability(pos: PositionFeatures, word: WordFeatures, user_id: str) -> tuple[float, dict]:
-    """Returns (P(error), speaker_relative_features_used) for this one
-    target position. Does NOT update the child's running baseline - call
-    update_baselines separately, after the verdict is recorded, so a
-    replay/retry of the same attempt doesn't double-count it."""
+def compute_error_probability(
+    pos: PositionFeatures, word: WordFeatures, user_id: str
+) -> tuple[float, FeatureExplanation]:
+    """Returns (P(error), FeatureExplanation) for this one target position.
+    Does NOT update the child's running baseline - call update_baselines
+    separately, after the verdict is recorded, so a replay/retry of the same
+    attempt doesn't double-count it."""
     model, scaler, encoder, metadata = _load()
     raw_relative = _raw_relative_inputs(pos)
-    relative = speaker_relative_features(user_id, pos.expected, raw_relative)
+    relative, calibration_sources = speaker_relative_features(user_id, pos.expected, raw_relative)
 
     MISSING_SENTINEL = -5.0
     values = {
@@ -107,14 +172,24 @@ def compute_error_probability(pos: PositionFeatures, word: WordFeatures, user_id
     numeric_vec = np.array([[values[feat] for feat in metadata["numeric_features"]]])
     numeric_scaled = scaler.transform(numeric_vec)
 
-    cat_raw = np.array([[
+    cat_raw_values = [
         pos.expected, pos.position, pos.llr_best_origin, pos.top_competitor if pos.top_competitor else "None",
-    ]])
+    ]
+    cat_raw = np.array([cat_raw_values])
     cat_encoded = encoder.transform(cat_raw)
 
     X = np.hstack([numeric_scaled, cat_encoded])
     p = float(model.predict_proba(X)[0, 1])
-    return p, relative
+
+    explanation = FeatureExplanation(
+        raw={feat: round(values[feat], 6) for feat in metadata["numeric_features"]},
+        scaled_numeric={
+            feat: round(float(v), 6) for feat, v in zip(metadata["numeric_features"], numeric_scaled[0])
+        },
+        categorical=dict(zip(metadata["categorical_features"], cat_raw_values)),
+        calibration_sources=calibration_sources,
+    )
+    return p, explanation
 
 
 def classify(p: float) -> str:
@@ -130,7 +205,7 @@ def decide(pos: PositionFeatures, word: WordFeatures, user_id: str) -> AttemptDe
     attempt (regardless of status) is recorded to attempt_history with its
     probability - that history is the therapist-queue's ranking source
     (db.get_top_k_by_probability), independent of this function's verdict."""
-    p, relative = compute_error_probability(pos, word, user_id)
+    p, explanation = compute_error_probability(pos, word, user_id)
     status = classify(p)
     # Naming rule: heard is only ever populated for "wrong" - never for
     # "unclear", which must stay a non-naming nudge.
@@ -159,4 +234,11 @@ def decide(pos: PositionFeatures, word: WordFeatures, user_id: str) -> AttemptDe
     if status == "wrong":
         db.add_to_therapist_review_queue(user_id, pos.expected, n_wrong=1, n_window=1, mean_probability=p)
 
-    return AttemptDecision(status=status, probability=p, phoneme=pos.expected, heard=heard)
+    logger.info(
+        "decide user_id=%s phoneme=%s verdict=%s p=%.6f heard=%s calibration_sources=%s raw=%s scaled_numeric=%s categorical=%s",
+        user_id, pos.expected, status, p, heard,
+        json.dumps(explanation.calibration_sources), json.dumps(explanation.raw),
+        json.dumps(explanation.scaled_numeric), json.dumps(explanation.categorical),
+    )
+
+    return AttemptDecision(status=status, probability=p, phoneme=pos.expected, heard=heard, explanation=explanation)
