@@ -140,7 +140,7 @@ def score_word(
         }
 
     pos = word_features.positions[target_index]
-    result = decision.decide(pos, word_features, user_id)
+    result = decision.decide(pos, word_features, user_id, target_word=word)
     feedback = _generate_feedback(word, result.status, target_phoneme)
 
     # main.py's phoneme-error-count/recommendation-card logic keys off

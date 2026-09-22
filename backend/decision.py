@@ -200,11 +200,13 @@ def classify(p: float) -> str:
     return "unclear"
 
 
-def decide(pos: PositionFeatures, word: WordFeatures, user_id: str) -> AttemptDecision:
+def decide(pos: PositionFeatures, word: WordFeatures, user_id: str, target_word: str | None = None) -> AttemptDecision:
     """Single-attempt decision at the child-facing operating point. Every
     attempt (regardless of status) is recorded to attempt_history with its
     probability - that history is the therapist-queue's ranking source
-    (db.get_top_k_by_probability), independent of this function's verdict."""
+    (db.get_top_k_by_probability), independent of this function's verdict.
+    target_word is the literal word text (e.g. "cat") purely for the
+    therapist review queue's display - it plays no part in scoring."""
     p, explanation = compute_error_probability(pos, word, user_id)
     status = classify(p)
     # Naming rule: heard is only ever populated for "wrong" - never for
@@ -228,11 +230,11 @@ def decide(pos: PositionFeatures, word: WordFeatures, user_id: str) -> AttemptDe
     else:
         heard = pos.top_competitor
 
-    db.record_attempt_history(user_id, pos.expected, status, p)
+    db.record_attempt_history(user_id, pos.expected, status, p, word=target_word)
     update_baselines(user_id, pos.expected, _raw_relative_inputs(pos))
 
     if status == "wrong":
-        db.add_to_therapist_review_queue(user_id, pos.expected, n_wrong=1, n_window=1, mean_probability=p)
+        db.add_to_therapist_review_queue(user_id, pos.expected, n_wrong=1, n_window=1, mean_probability=p, word=target_word)
 
     logger.info(
         "decide user_id=%s phoneme=%s verdict=%s p=%.6f heard=%s calibration_sources=%s raw=%s scaled_numeric=%s categorical=%s",

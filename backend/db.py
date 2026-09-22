@@ -1,11 +1,16 @@
 """SQLite persistence layer for SpeechPal. Plain sqlite3, no ORM."""
 import json
+import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "speechpal.db"
+# DATABASE_PATH points at Render's persistent disk (mounted at /var/data) in
+# production - see render.yaml - so the sqlite file survives redeploys
+# instead of living in the container's ephemeral filesystem. Defaults to the
+# old next-to-this-file location for local/dev runs.
+DB_PATH = Path(os.environ.get("DATABASE_PATH", str(Path(__file__).parent / "speechpal.db")))
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -115,6 +120,7 @@ CREATE TABLE IF NOT EXISTS attempt_history (
     phoneme TEXT NOT NULL,
     status TEXT NOT NULL,
     probability REAL NOT NULL,
+    word TEXT,
     created_at TEXT NOT NULL
 );
 
@@ -127,6 +133,7 @@ CREATE TABLE IF NOT EXISTS therapist_review_queue (
     n_wrong INTEGER NOT NULL,
     n_window INTEGER NOT NULL,
     mean_probability REAL NOT NULL,
+    word TEXT,
     created_at TEXT NOT NULL,
     reviewed INTEGER NOT NULL DEFAULT 0
 );
@@ -156,6 +163,7 @@ def get_conn():
 
 
 def init_db():
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with get_conn() as conn:
         conn.executescript(SCHEMA)
         # Lightweight migration for databases created before this column
@@ -169,6 +177,14 @@ def init_db():
             pass
         try:
             conn.execute("ALTER TABLE users ADD COLUMN accent_tolerance_enabled INTEGER NOT NULL DEFAULT 1")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE attempt_history ADD COLUMN word TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE therapist_review_queue ADD COLUMN word TEXT")
         except sqlite3.OperationalError:
             pass
 
@@ -284,11 +300,11 @@ def upsert_feature_baseline(user_id: str, phoneme: str, feature: str, n: int, me
         )
 
 
-def record_attempt_history(user_id: str, phoneme: str, status: str, probability: float):
+def record_attempt_history(user_id: str, phoneme: str, status: str, probability: float, word: str | None = None):
     with get_conn() as conn:
         conn.execute(
-            "INSERT INTO attempt_history (user_id, phoneme, status, probability, created_at) VALUES (?, ?, ?, ?, ?)",
-            (user_id, phoneme, status, probability, now_iso()),
+            "INSERT INTO attempt_history (user_id, phoneme, status, probability, word, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (user_id, phoneme, status, probability, word, now_iso()),
         )
 
 
@@ -304,12 +320,14 @@ def get_recent_attempt_history(user_id: str, phoneme: str, limit: int) -> list[d
         return [dict(r) for r in reversed(rows)]
 
 
-def add_to_therapist_review_queue(user_id: str, phoneme: str, n_wrong: int, n_window: int, mean_probability: float):
+def add_to_therapist_review_queue(
+    user_id: str, phoneme: str, n_wrong: int, n_window: int, mean_probability: float, word: str | None = None
+):
     with get_conn() as conn:
         conn.execute(
-            "INSERT INTO therapist_review_queue (user_id, phoneme, n_wrong, n_window, mean_probability, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (user_id, phoneme, n_wrong, n_window, mean_probability, now_iso()),
+            "INSERT INTO therapist_review_queue (user_id, phoneme, n_wrong, n_window, mean_probability, word, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, phoneme, n_wrong, n_window, mean_probability, word, now_iso()),
         )
 
 
