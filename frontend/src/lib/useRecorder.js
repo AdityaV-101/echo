@@ -69,10 +69,16 @@ export function useRecorder() {
     audioCtxRef.current = audioCtx;
     analyserRef.current = analyser;
 
-    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      ? "audio/webm;codecs=opus"
-      : "audio/webm";
-    const recorder = new MediaRecorder(stream, { mimeType });
+    // Safari (desktop and iOS) never supported audio/webm in MediaRecorder -
+    // isTypeSupported("audio/webm") is false there, and passing an
+    // unsupported mimeType to the MediaRecorder constructor throws
+    // NotSupportedError, so recording couldn't even start on Safari before
+    // this list included an audio/mp4 (AAC) option, which Safari does
+    // support. The final `undefined` fallback lets the browser pick its own
+    // default instead of throwing if none of the explicit options match.
+    const MIME_CANDIDATES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4;codecs=mp4a.40.2", "audio/mp4"];
+    const mimeType = MIME_CANDIDATES.find((t) => MediaRecorder.isTypeSupported(t));
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
     chunksRef.current = [];
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);

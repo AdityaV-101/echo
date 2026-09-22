@@ -1,6 +1,10 @@
 import { getForcedStatus } from "./mockControl";
 
-const BASE_URL = "http://localhost:8000";
+// In dev, Vite serves the frontend on its own port and the backend runs
+// separately on 8000. In production the built frontend is served BY the
+// same FastAPI process (see the Dockerfile), so API calls are same-origin
+// and BASE_URL is just "" - a relative "/api/..." fetch.
+const BASE_URL = import.meta.env.DEV ? "http://localhost:8000" : "";
 
 async function handleResponse(res) {
   if (!res.ok) {
@@ -94,7 +98,12 @@ export async function scoreWord({ userId, word, level, phonemesOverride, targetP
   if (phonemesOverride) form.append("phonemes_override", JSON.stringify(phonemesOverride));
   if (targetPhoneme) form.append("target_phoneme", targetPhoneme);
   if (position) form.append("position", position);
-  form.append("audio", audioBlob, "recording.webm");
+  // The filename's extension is how the backend picks ffmpeg's input
+  // container hint (see backend/main.py) - it has to match what the
+  // browser actually recorded (Safari sends audio/mp4, not webm) rather
+  // than a hardcoded ".webm" that only happened to match Chrome/Firefox.
+  const ext = audioBlob.type.includes("mp4") ? "mp4" : audioBlob.type.includes("webm") ? "webm" : "webm";
+  form.append("audio", audioBlob, `recording.${ext}`);
   // Dev-only: the mock server reads this field to force a specific verdict
   // (see frontend/src/dev/MockStatusBar.jsx). The real backend ignores any
   // extra form field it doesn't recognize, so this is always safe to send.
