@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: echo
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: standard
+    region: oregon
+    healthCheckPath: /api/health
+    autoDeploy: true
+    disk:
+      name: echo-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_PATH
+        value: /var/data/speechpal.db
+      - key: DEBUG_KEEP_AUDIO
+        value: "0"

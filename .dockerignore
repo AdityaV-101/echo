@@ -1,0 +1,31 @@
+.git/
+.claude/
+venv/
+__pycache__/
+*.pyc
+*.db
+*.db-journal
+.env
+.env.*
+
+# Frontend build artifacts/deps - the frontend-builder stage does its own
+# npm ci + npm run build from source, so neither is needed (or wanted -
+# node_modules alone would be a huge, non-portable layer) in the image.
+frontend/node_modules/
+frontend/dist/
+frontend_dist/
+
+# Eval corpora/caches and debug recordings never belong in a deployment
+# image - same policy as .gitignore (see its comments for why).
+eval/
+backend/debug_audio/
+
+# Local docs/scratch, not needed at runtime.
+DIAGNOSIS.md
+RESULTS.md
+SETUP_NOTES.md
+PAPER_SOURCE.md
+paper_data/
+tests/
+requirements-dev.txt
+run.sh

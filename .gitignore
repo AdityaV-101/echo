@@ -1,13 +1,33 @@
 venv/
 __pycache__/
 *.pyc
-backend/speechpal.db
+*.db
+*.db-journal
 frontend/node_modules/
 frontend/dist/
+frontend_dist/
 .DS_Store
-eval/speechocean_cache/
+.env
+.env.*
+!.env.example
 .claude/
+.pytest_cache/
+
 # DEBUG_KEEP_AUDIO=1 capture (Part 2 Step 1) - real recorded voice audio,
 # never committed.
 backend/debug_audio/
-.pytest_cache/
+
+# Eval corpora/caches: speechocean762 is a licensed corpus (never goes to
+# GitHub - see PAPER_SOURCE.md/RESULTS.md for how it's used locally) and
+# eval audio in general shouldn't accumulate here even though today's
+# eval/audio/* happen to be small espeak-ng-synthesized test clips, not
+# real recordings (see SETUP_NOTES.md's "Mandatory smoke test result").
+eval/speechocean_cache/
+eval/speechocean_train.jsonl
+eval/speechocean_test.jsonl
+eval/phase0_raw_cache_*.json
+eval/phase2_features_*.json
+eval/features_raw_cache_*.json
+eval/audio/
+eval/smoke_test_audio/
+eval/boundary_test_audio/
