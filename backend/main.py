@@ -1,11 +1,14 @@
+import asyncio
 import json
 import logging
 import os
 import tempfile
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 import db
 from scorer_common import canonical_phonemes_for_word
@@ -59,7 +62,42 @@ RECOMMENDATION_THRESHOLD = 3
 
 db.init_db()
 
-app = FastAPI(title="Echo API")
+# /api/health reports healthy only once this is true. USE_PHASE3_SCORER and
+# USE_REAL_SCORER are the two paths that depend on gop_scorer's wav2vec2
+# model (a ~1.2GB download when not already cached in the image); the stub
+# scorer has nothing to warm up, so it's considered ready immediately.
+_scorer_ready = {"value": not (USE_PHASE3_SCORER or USE_REAL_SCORER)}
+
+
+def _warm_up_wav2vec2() -> None:
+    """Loads the wav2vec2 phoneme recognizer and runs one dummy inference
+    through the exact same code path a real request uses, so weight-loading
+    and any first-call framework overhead (CPU kernel selection, etc.) both
+    happen here rather than on whichever request happens to arrive first.
+    Runs in a thread off the event loop (see lifespan below) so /api/health
+    stays reachable - and correctly reports "not ready yet" - for the whole
+    time this is in progress, instead of the port not even accepting
+    connections until it finishes."""
+    import numpy as np
+    from gop_scorer import compute_log_probs, get_model
+
+    logger.info("Warm-up: loading wav2vec2 phoneme recognizer (facebook/wav2vec2-lv-60-espeak-cv-ft)...")
+    processor, model, *_ = get_model()
+    logger.info("Warm-up: running one dummy inference...")
+    compute_log_probs(processor, model, np.zeros(16000, dtype=np.float32))
+    _scorer_ready["value"] = True
+    logger.info("Warm-up complete - scorer is ready to serve requests.")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if not _scorer_ready["value"]:
+        loop = asyncio.get_event_loop()
+        app.state.warmup_task = loop.run_in_executor(None, _warm_up_wav2vec2)
+    yield
+
+
+app = FastAPI(title="Echo API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -291,4 +329,20 @@ def delete_custom_word(word_id: int):
 
 @app.get("/api/health")
 def health():
+    if not _scorer_ready["value"]:
+        return JSONResponse(status_code=503, content={"status": "starting", "real_scorer": USE_REAL_SCORER})
     return {"status": "ok", "real_scorer": USE_REAL_SCORER}
+
+
+# The Dockerfile builds the frontend and copies it to frontend_dist, a
+# sibling of this backend/ directory - see the Dockerfile's final COPY.
+# Mounted last (Starlette matches routes in registration order) so it never
+# shadows any /api/* route above; it just serves index.html/assets for
+# everything else. Absent entirely in local dev (no Docker build has run),
+# which is fine - Vite's dev server serves the frontend there instead.
+_FRONTEND_DIST = Path(__file__).parent.parent / "frontend_dist"
+if _FRONTEND_DIST.is_dir():
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/", StaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend")
+    logger.info("Serving built frontend from %s", _FRONTEND_DIST)
